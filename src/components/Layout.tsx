@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle,
   MessageCircle, Mail, MapPin, ShieldCheck, Calendar, Headphones, UserCheck, Receipt, ExternalLink,
-  Sparkles,
+  Sparkles, Building,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -60,6 +60,14 @@ export function Layout({ children }: LayoutProps) {
         { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
         { to: '/tasks', icon: ListTodo, label: 'Tasks' },
       ];
+
+  const platformAdminNavItems = isPlatformAdmin
+    ? [
+        { to: '/platform/organisations', icon: Building, label: 'Organisations' },
+        { to: '/platform/users', icon: Users, label: 'Users' },
+        { to: '/platform/billing', icon: Wallet, label: 'Billing' },
+      ]
+    : [];
 
   const adminNavItems = isPlatformAdmin
     ? []
@@ -136,6 +144,38 @@ export function Layout({ children }: LayoutProps) {
             </Link>
           );
         })}
+
+        {platformAdminNavItems.length > 0 && (
+          <>
+            <div className="pt-4 pb-2 px-3 flex items-center gap-1.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-fuchsia-400/50" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.15em] bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent">
+                Platform Admin
+              </span>
+            </div>
+            {platformAdminNavItems.map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                  location.pathname === item.to
+                    ? 'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 text-white ring-1 ring-fuchsia-400/30'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-white'
+                )}
+              >
+                <item.icon className={cn(
+                  'h-4.5 w-4.5',
+                  location.pathname === item.to ? 'text-fuchsia-300' : ''
+                )} />
+                {item.label}
+              </Link>
+            ))}
+          </>
+        )}
 
         {adminNavItems.length > 0 && (
           <>

@@ -13,6 +13,9 @@ import { OnboardingPage } from '@/pages/Onboarding';
 import { UserManagementPage } from '@/pages/UserManagement';
 import { BillingPage } from '@/pages/Billing';
 import { ProfilePage } from '@/pages/Profile';
+import { PlatformOrganisations } from '@/pages/PlatformOrganisations';
+import { PlatformUsers } from '@/pages/PlatformUsers';
+import { PlatformBilling } from '@/pages/PlatformBilling';
 import Demo from '@/pages/Demo';
 
 const queryClient = new QueryClient({
@@ -32,12 +35,24 @@ function LoadingSpinner() {
   );
 }
 
-function ProtectedRoute({ children, requiredAdmin, requireOrg }: { children: React.ReactNode; requiredAdmin?: boolean; requireOrg?: boolean }) {
+function ProtectedRoute({
+  children, requiredAdmin, requireOrg, requirePlatformAdmin,
+}: {
+  children: React.ReactNode;
+  requiredAdmin?: boolean;
+  requireOrg?: boolean;
+  requirePlatformAdmin?: boolean;
+}) {
   const { user, isLoading, isInitialized, isAdmin, isPlatformAdmin, isTrialExpired } = useAuth();
   const location = useLocation();
 
   if (!isInitialized || isLoading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Platform-only routes require platform admin
+  if (requirePlatformAdmin && !isPlatformAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   // Platform admin cannot access org-level routes
   if (isPlatformAdmin && (requiredAdmin || requireOrg)) {
@@ -85,6 +100,11 @@ function AppRoutes() {
       {/* Admin routes (org-level) */}
       <Route path="/billing" element={<ProtectedRoute requiredAdmin><BillingPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute requiredAdmin><UserManagementPage /></ProtectedRoute>} />
+
+      {/* Platform admin routes */}
+      <Route path="/platform/organisations" element={<ProtectedRoute requirePlatformAdmin><PlatformOrganisations /></ProtectedRoute>} />
+      <Route path="/platform/users" element={<ProtectedRoute requirePlatformAdmin><PlatformUsers /></ProtectedRoute>} />
+      <Route path="/platform/billing" element={<ProtectedRoute requirePlatformAdmin><PlatformBilling /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
