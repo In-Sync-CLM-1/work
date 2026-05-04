@@ -14,6 +14,7 @@ import { UserManagementPage } from '@/pages/UserManagement';
 import { BillingPage } from '@/pages/Billing';
 import { ProfilePage } from '@/pages/Profile';
 import { PlatformOrganisations } from '@/pages/PlatformOrganisations';
+import { PlatformOrgDetail } from '@/pages/PlatformOrgDetail';
 import { PlatformUsers } from '@/pages/PlatformUsers';
 import { PlatformBilling } from '@/pages/PlatformBilling';
 import Demo from '@/pages/Demo';
@@ -103,6 +104,7 @@ function AppRoutes() {
 
       {/* Platform admin routes */}
       <Route path="/platform/organisations" element={<ProtectedRoute requirePlatformAdmin><PlatformOrganisations /></ProtectedRoute>} />
+      <Route path="/platform/organisations/:id" element={<ProtectedRoute requirePlatformAdmin><PlatformOrgDetail /></ProtectedRoute>} />
       <Route path="/platform/users" element={<ProtectedRoute requirePlatformAdmin><PlatformUsers /></ProtectedRoute>} />
       <Route path="/platform/billing" element={<ProtectedRoute requirePlatformAdmin><PlatformBilling /></ProtectedRoute>} />
 

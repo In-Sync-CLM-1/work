@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Building2, Search, Filter, Trash2, Settings2, AlertTriangle, Users,
-  TrendingUp, IndianRupee, Sparkles, Calendar, ChevronUp, ChevronDown,
+  TrendingUp, IndianRupee, Sparkles, Calendar, ChevronUp, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -170,6 +171,7 @@ function DeleteOrgDialog({ org, open, onClose }: DeleteDialogProps) {
 }
 
 export function PlatformOrganisations() {
+  const navigate = useNavigate();
   const { data: orgs = [], isLoading } = usePlatformOrgs();
   const [search, setSearch] = useState('');
   const [planFilter, setPlanFilter] = useState<string>('all');
@@ -344,7 +346,8 @@ export function PlatformOrganisations() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: idx * 0.02 }}
-                  className="border-b last:border-0 hover:bg-muted/20 transition-colors group"
+                  onClick={() => navigate(`/platform/organisations/${org.id}`)}
+                  className="border-b last:border-0 hover:bg-muted/30 transition-colors group cursor-pointer"
                 >
                   <td className="py-3 pl-4">
                     <div className="flex items-center gap-3">
@@ -355,7 +358,10 @@ export function PlatformOrganisations() {
                         {org.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold truncate">{org.name}</p>
+                        <p className="font-semibold truncate group-hover:text-primary transition-colors">
+                          {org.name}
+                          <ChevronRight className="inline-block h-3 w-3 ml-1 opacity-0 group-hover:opacity-60 -ml-0.5 group-hover:ml-1 transition-all" />
+                        </p>
                         <p className="text-[11px] text-muted-foreground">
                           Last activity {timeAgo(org.lastActivity)} ago
                         </p>
@@ -419,16 +425,19 @@ export function PlatformOrganisations() {
                     {formatDate(org.createdAt)}
                   </td>
                   <td className="py-3 pr-4 text-right">
-                    <div className="inline-flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <div
+                      className="inline-flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <button
-                        onClick={() => setManagingOrg(org)}
+                        onClick={(e) => { e.stopPropagation(); setManagingOrg(org); }}
                         className="p-1.5 rounded-md hover:bg-violet-100 text-muted-foreground hover:text-violet-700 transition-colors"
                         title="Manage org"
                       >
                         <Settings2 className="h-3.5 w-3.5" />
                       </button>
                       <button
-                        onClick={() => setDeletingOrg(org)}
+                        onClick={(e) => { e.stopPropagation(); setDeletingOrg(org); }}
                         className="p-1.5 rounded-md hover:bg-red-100 text-muted-foreground hover:text-red-700 transition-colors"
                         title="Delete org"
                       >
