@@ -112,12 +112,40 @@ export function PlatformUsers() {
         </p>
       </motion.div>
 
-      {/* KPI strip */}
+      {/* KPI strip — click to filter */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <KpiCard label="Total Users" value={stats.total} icon={Users} gradient="from-sky-500 to-blue-600" />
-        <KpiCard label="Active" value={stats.active} icon={UserCheck} gradient="from-emerald-500 to-green-600" />
-        <KpiCard label="Inactive" value={stats.inactive} icon={UserX} gradient="from-zinc-500 to-slate-600" />
-        <KpiCard label="Org Admins" value={stats.admins} icon={ShieldCheck} gradient="from-violet-500 to-fuchsia-600" />
+        <KpiCard
+          label="Total Users"
+          value={stats.total}
+          icon={Users}
+          gradient="from-sky-500 to-blue-600"
+          active={statusFilter === 'all' && roleFilter === 'all' && orgFilter === 'all'}
+          onClick={() => { setStatusFilter('all'); setRoleFilter('all'); setOrgFilter('all'); }}
+        />
+        <KpiCard
+          label="Active"
+          value={stats.active}
+          icon={UserCheck}
+          gradient="from-emerald-500 to-green-600"
+          active={statusFilter === 'active'}
+          onClick={() => { setStatusFilter('active'); setRoleFilter('all'); setOrgFilter('all'); }}
+        />
+        <KpiCard
+          label="Inactive"
+          value={stats.inactive}
+          icon={UserX}
+          gradient="from-zinc-500 to-slate-600"
+          active={statusFilter === 'inactive'}
+          onClick={() => { setStatusFilter('inactive'); setRoleFilter('all'); setOrgFilter('all'); }}
+        />
+        <KpiCard
+          label="Org Admins"
+          value={stats.admins}
+          icon={ShieldCheck}
+          gradient="from-violet-500 to-fuchsia-600"
+          active={roleFilter === 'admin'}
+          onClick={() => { setRoleFilter('admin'); setStatusFilter('all'); setOrgFilter('all'); }}
+        />
       </motion.div>
 
       {/* Filters */}
@@ -277,14 +305,34 @@ export function PlatformUsers() {
   );
 }
 
-interface KpiProps { label: string; value: string | number; icon: typeof Users; gradient: string }
+interface KpiProps {
+  label: string;
+  value: string | number;
+  icon: typeof Users;
+  gradient: string;
+  active?: boolean;
+  onClick?: () => void;
+}
 
-function KpiCard({ label, value, icon: Icon, gradient }: KpiProps) {
+function KpiCard({ label, value, icon: Icon, gradient, active, onClick }: KpiProps) {
   return (
-    <div className={cn('relative overflow-hidden rounded-xl bg-gradient-to-br p-4 text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md', gradient)}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group relative overflow-hidden rounded-xl bg-gradient-to-br p-4 text-white text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40',
+        gradient,
+        active && 'ring-2 ring-white shadow-lg -translate-y-0.5',
+      )}
+    >
+      {active && (
+        <span className="absolute top-2 right-2 inline-flex items-center justify-center h-4 w-4 rounded-full bg-white/95 text-[9px] font-bold text-foreground shadow">
+          ✓
+        </span>
+      )}
       <p className="text-2xl font-bold leading-none">{value}</p>
       <p className="text-[10px] font-semibold uppercase tracking-wider mt-1 text-white/80">{label}</p>
-      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08]" strokeWidth={1.5} />
-    </div>
+      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08] group-hover:opacity-[0.18] transition-opacity" strokeWidth={1.5} />
+    </button>
   );
 }

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   IndianRupee, TrendingUp, Receipt, Download, Search, CreditCard, Building2,
@@ -68,6 +68,11 @@ export function PlatformBilling() {
   const [search, setSearch] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
+  const tableRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTable = () => {
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const filtered = useMemo(() => {
     if (!data) return [];
@@ -167,14 +172,53 @@ export function PlatformBilling() {
           </div>
         </motion.div>
 
-        {/* KPI grid */}
+        {/* KPI grid — click to filter / scroll */}
         <motion.div variants={fadeUp} className="lg:col-span-2 grid grid-cols-2 md:grid-cols-3 gap-3">
-          <KpiCard label="Paying Orgs" value={summary.payingOrgs} icon={Building2} gradient="from-violet-500 to-purple-600" />
-          <KpiCard label="Conversion" value={`${summary.conversionRate}%`} icon={TrendingUp} gradient="from-emerald-500 to-green-600" />
-          <KpiCard label="ARPU" value={fmtINRCompact(summary.arpu)} icon={IndianRupee} gradient="from-pink-500 to-rose-600" />
-          <KpiCard label="Team Plans" value={summary.teamOrgs} icon={Crown} gradient="from-sky-500 to-blue-600" />
-          <KpiCard label="Business Plans" value={summary.businessOrgs} icon={Crown} gradient="from-amber-500 to-orange-500" />
-          <KpiCard label="Payments" value={summary.totalPayments} icon={Receipt} gradient="from-cyan-500 to-teal-600" />
+          <KpiCard
+            label="Paying Orgs"
+            value={summary.payingOrgs}
+            icon={Building2}
+            gradient="from-violet-500 to-purple-600"
+            onClick={() => { setPlanFilter('all'); setMethodFilter('all'); scrollToTable(); }}
+          />
+          <KpiCard
+            label="Conversion"
+            value={`${summary.conversionRate}%`}
+            icon={TrendingUp}
+            gradient="from-emerald-500 to-green-600"
+            onClick={scrollToTable}
+          />
+          <KpiCard
+            label="ARPU"
+            value={fmtINRCompact(summary.arpu)}
+            icon={IndianRupee}
+            gradient="from-pink-500 to-rose-600"
+            onClick={scrollToTable}
+          />
+          <KpiCard
+            label="Team Plans"
+            value={summary.teamOrgs}
+            icon={Crown}
+            gradient="from-sky-500 to-blue-600"
+            active={planFilter === 'team'}
+            onClick={() => { setPlanFilter('team'); scrollToTable(); }}
+          />
+          <KpiCard
+            label="Business Plans"
+            value={summary.businessOrgs}
+            icon={Crown}
+            gradient="from-amber-500 to-orange-500"
+            active={planFilter === 'business'}
+            onClick={() => { setPlanFilter('business'); scrollToTable(); }}
+          />
+          <KpiCard
+            label="Payments"
+            value={summary.totalPayments}
+            icon={Receipt}
+            gradient="from-cyan-500 to-teal-600"
+            active={planFilter === 'all' && methodFilter === 'all' && !search}
+            onClick={() => { setPlanFilter('all'); setMethodFilter('all'); setSearch(''); scrollToTable(); }}
+          />
         </motion.div>
       </div>
 
@@ -295,7 +339,7 @@ export function PlatformBilling() {
       </motion.div>
 
       {/* Payments table */}
-      <motion.div variants={fadeUp} className="rounded-xl border bg-card overflow-hidden">
+      <motion.div ref={tableRef} variants={fadeUp} className="rounded-xl border bg-card overflow-hidden scroll-mt-4">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
@@ -360,14 +404,34 @@ export function PlatformBilling() {
   );
 }
 
-interface KpiProps { label: string; value: string | number; icon: typeof IndianRupee; gradient: string }
+interface KpiProps {
+  label: string;
+  value: string | number;
+  icon: typeof IndianRupee;
+  gradient: string;
+  active?: boolean;
+  onClick?: () => void;
+}
 
-function KpiCard({ label, value, icon: Icon, gradient }: KpiProps) {
+function KpiCard({ label, value, icon: Icon, gradient, active, onClick }: KpiProps) {
   return (
-    <div className={cn('relative overflow-hidden rounded-xl bg-gradient-to-br p-4 text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md', gradient)}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'group relative overflow-hidden rounded-xl bg-gradient-to-br p-4 text-white text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40',
+        gradient,
+        active && 'ring-2 ring-white shadow-lg -translate-y-0.5',
+      )}
+    >
+      {active && (
+        <span className="absolute top-2 right-2 inline-flex items-center justify-center h-4 w-4 rounded-full bg-white/95 text-[9px] font-bold text-foreground shadow">
+          ✓
+        </span>
+      )}
       <p className="text-2xl font-bold leading-none">{value}</p>
       <p className="text-[10px] font-semibold uppercase tracking-wider mt-1 text-white/80">{label}</p>
-      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08]" strokeWidth={1.5} />
-    </div>
+      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08] group-hover:opacity-[0.18] transition-opacity" strokeWidth={1.5} />
+    </button>
   );
 }

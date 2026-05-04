@@ -245,13 +245,48 @@ export function PlatformOrganisations() {
         </div>
       </motion.div>
 
-      {/* Stats strip */}
+      {/* Stats strip — click to filter */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
-        <StatCard label="Total Orgs" value={stats.total} icon={Building2} gradient="from-violet-500 to-purple-600" />
-        <StatCard label="On Trial" value={stats.trial} icon={Calendar} gradient="from-amber-500 to-orange-500" />
-        <StatCard label="Team Plan" value={stats.team} icon={Users} gradient="from-sky-500 to-blue-600" />
-        <StatCard label="Business" value={stats.business} icon={TrendingUp} gradient="from-emerald-500 to-green-600" />
-        <StatCard label="Total Revenue" value={fmtINR(stats.totalRevenue)} icon={IndianRupee} gradient="from-pink-500 to-rose-600" />
+        <StatCard
+          label="Total Orgs"
+          value={stats.total}
+          icon={Building2}
+          gradient="from-violet-500 to-purple-600"
+          active={planFilter === 'all' && statusFilter === 'all' && sortKey === 'createdAt'}
+          onClick={() => { setPlanFilter('all'); setStatusFilter('all'); setSortKey('createdAt'); setSortDir('desc'); }}
+        />
+        <StatCard
+          label="On Trial"
+          value={stats.trial}
+          icon={Calendar}
+          gradient="from-amber-500 to-orange-500"
+          active={planFilter === 'trial'}
+          onClick={() => { setPlanFilter('trial'); setStatusFilter('all'); }}
+        />
+        <StatCard
+          label="Team Plan"
+          value={stats.team}
+          icon={Users}
+          gradient="from-sky-500 to-blue-600"
+          active={planFilter === 'team'}
+          onClick={() => { setPlanFilter('team'); setStatusFilter('all'); }}
+        />
+        <StatCard
+          label="Business"
+          value={stats.business}
+          icon={TrendingUp}
+          gradient="from-emerald-500 to-green-600"
+          active={planFilter === 'business'}
+          onClick={() => { setPlanFilter('business'); setStatusFilter('all'); }}
+        />
+        <StatCard
+          label="Total Revenue"
+          value={fmtINR(stats.totalRevenue)}
+          icon={IndianRupee}
+          gradient="from-pink-500 to-rose-600"
+          active={sortKey === 'totalRevenue'}
+          onClick={() => { setSortKey('totalRevenue'); setSortDir('desc'); }}
+        />
       </motion.div>
 
       {/* Filters bar */}
@@ -446,14 +481,27 @@ interface StatCardProps {
   value: string | number;
   icon: typeof Building2;
   gradient: string;
+  active?: boolean;
+  onClick?: () => void;
 }
 
-function StatCard({ label, value, icon: Icon, gradient }: StatCardProps) {
+function StatCard({ label, value, icon: Icon, gradient, active, onClick }: StatCardProps) {
   return (
-    <div className={`relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} p-4 text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${gradient} p-4 text-white text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40 ${
+        active ? 'ring-2 ring-white shadow-lg -translate-y-0.5' : ''
+      }`}
+    >
+      {active && (
+        <span className="absolute top-2 right-2 inline-flex items-center justify-center h-4 w-4 rounded-full bg-white/95 text-[9px] font-bold text-foreground shadow">
+          ✓
+        </span>
+      )}
       <p className="text-2xl font-bold leading-none">{value}</p>
       <p className="text-[10px] font-semibold uppercase tracking-wider mt-1 text-white/80">{label}</p>
-      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08]" strokeWidth={1.5} />
-    </div>
+      <Icon className="absolute bottom-2 right-2 h-8 w-8 opacity-[0.08] group-hover:opacity-[0.18] transition-opacity" strokeWidth={1.5} />
+    </button>
   );
 }
