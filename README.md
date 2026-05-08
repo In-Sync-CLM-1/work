@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# In-Sync Work-Sync
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hierarchical task accountability with WhatsApp + email alerts at every step — built for how Indian teams actually work. You assign a task; the platform tracks it through every level of your designation hierarchy until it's done, accepted, and signed off.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** Vite + React + TypeScript + Tailwind CSS (PWA via vite-plugin-pwa)
+- **Backend:** Supabase (PostgreSQL + Edge Functions + Auth + Storage)
+- **Hosting:** Cloudflare Pages
+- **Notifications:** Resend (email), Exotel (WhatsApp)
 
-## React Compiler
+## Local Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev          # http://localhost:5173
+npm run build        # outputs to dist/
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`.env` (gitignored) must contain at minimum:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=https://<ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
 ```
+
+For deploys, also include:
+
+```env
+CLOUDFLARE_API_TOKEN=cfut_...
+CLOUDFLARE_ACCOUNT_ID=...
+GITHUB_TOKEN=ghp_...
+GITHUB_REPO_URL=https://github.com/insyncclm133-ops/work.git
+```
+
+Only values prefixed `VITE_` are inlined into the browser bundle. Anything that grants write access (service role key, sbp_ token, Cloudflare API token, GitHub token) must NOT be prefixed `VITE_`.
+
+## Deploy — Frontend (Cloudflare Pages)
+
+The frontend ships directly from a local working tree using Wrangler. There is no GitHub Actions step for the frontend; pushing code does not deploy it.
+
+```powershell
+npm run build
+Set-Content -Path dist\_redirects -Value "/*  /index.html  200"
+wrangler pages deploy dist --project-name=work-sync --branch=main
+```
+
+The Cloudflare Pages project is `work-sync`, served at `https://work-sync.pages.dev`. The custom domain `work.in-sync.co.in` points at it via a proxied CNAME on the `in-sync.co.in` zone.
+
+## Deploy — Supabase (CI)
+
+Migrations and edge functions deploy automatically on push to `main` when files under `supabase/**` change. See `.github/workflows/supabase-deploy.yml`.
+
+Required GitHub Actions secrets:
+
+- `SUPABASE_ACCESS_TOKEN` (`sbp_…`)
+- `SUPABASE_DB_PASSWORD`
+- `VITE_SUPABASE_PROJECT_ID`
+
+## Custom Domain
+
+Production: `https://work.in-sync.co.in`
+
+DNS is managed in Cloudflare; the record is a proxied CNAME pointing at `work-sync.pages.dev`.
+
+## Rollback
+
+Forward-rollback (bad new deploy, Pages itself fine): use the Cloudflare Pages dashboard to roll back to a previous deployment of `work-sync`.
+
+Full rollback to Azure (only viable while the legacy SWA still exists): PATCH the production CNAME back to the Azure target via the Cloudflare API.
