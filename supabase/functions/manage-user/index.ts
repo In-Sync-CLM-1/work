@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case 'create-user': {
-        const { email, password, full_name: rawFullName, first_name, last_name, phone, org_id, role, designation_id, department } = body;
+        const { email, password, full_name: rawFullName, first_name, last_name, phone, org_id, role, designation_id, department, reports_to } = body;
 
         if (!email || !phone) {
           return new Response(JSON.stringify({ error: 'Email and phone number are required' }), {
@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
             org_id: effectiveOrgId || null,
             designation_id: designation_id || null,
             department: department || null,
+            reports_to: reports_to || null,
             is_active: true,
           })
           .eq('id', newUser.user.id);
@@ -126,7 +127,7 @@ Deno.serve(async (req) => {
       }
 
       case 'update-user': {
-        const { user_id, email, password, full_name: rawFullNameUpdate, first_name, last_name, phone, org_id, role, designation_id, department, is_active } = body;
+        const { user_id, email, password, full_name: rawFullNameUpdate, first_name, last_name, phone, org_id, role, designation_id, department, reports_to, is_active } = body;
         const full_name = rawFullNameUpdate || [first_name, last_name].filter(Boolean).join(' ') || undefined;
 
         // Update auth user if email or password changed
@@ -153,6 +154,7 @@ Deno.serve(async (req) => {
         if (org_id !== undefined) profileUpdates.org_id = org_id || null;
         if (designation_id !== undefined) profileUpdates.designation_id = designation_id || null;
         if (department !== undefined) profileUpdates.department = department || null;
+        if (reports_to !== undefined) profileUpdates.reports_to = reports_to || null;
         if (is_active !== undefined) profileUpdates.is_active = is_active;
 
         if (Object.keys(profileUpdates).length > 0) {

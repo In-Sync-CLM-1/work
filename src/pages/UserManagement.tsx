@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, UserX, X, Users, Search, Eye, EyeOff } from 'lucide-react';
 import type { UserRole, AppRole } from '@/types/user';
@@ -21,6 +21,11 @@ async function extractFunctionError(err: unknown): Promise<string> {
   }
   if (err instanceof Error) return err.message;
   return 'An error occurred';
+}
+
+interface ManagerOption {
+  id: string;
+  full_name: string;
 }
 
 export function UserManagementPage() {
@@ -57,6 +62,23 @@ export function UserManagementPage() {
       setIsLoading(false);
     }
   }, [orgId]);
+
+  // Build lookup map: user_id -> full_name (for the "Reporting To" column)
+  const userNameById = useMemo(() => {
+    const m = new Map<string, string>();
+    userRoles.forEach((ur) => {
+      if (ur.profiles?.full_name) m.set(ur.user_id, ur.profiles.full_name);
+    });
+    return m;
+  }, [userRoles]);
+
+  // Candidates for the manager dropdown — all active users in the org
+  const managerCandidates: ManagerOption[] = useMemo(() => {
+    return userRoles
+      .filter((ur) => ur.is_active && ur.profiles?.full_name)
+      .map((ur) => ({ id: ur.user_id, full_name: ur.profiles!.full_name }))
+      .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }, [userRoles]);
 
   useEffect(() => {
     fetchUsers();
@@ -132,6 +154,7 @@ export function UserManagementPage() {
             org_id: orgId,
             role: formData.role,
             department: formData.department || null,
+            reports_to: formData.reports_to || null,
           },
         });
 
@@ -151,6 +174,7 @@ export function UserManagementPage() {
             org_id: orgId,
             role: formData.role,
             department: formData.department || null,
+            reports_to: formData.reports_to || null,
           },
         });
 
@@ -228,6 +252,7 @@ export function UserManagementPage() {
                 <th className="text-left px-4 py-3 font-medium">Email</th>
                 <th className="text-left px-4 py-3 font-medium">Phone</th>
                 <th className="text-left px-4 py-3 font-medium">Department</th>
+                <th className="text-left px-4 py-3 font-medium">Reporting To</th>
                 <th className="text-left px-4 py-3 font-medium">Role</th>
                 <th className="text-left px-4 py-3 font-medium">Status</th>
                 {isAdminUser && <th className="text-right px-4 py-3 font-medium">Actions</th>}
@@ -236,7 +261,7 @@ export function UserManagementPage() {
             <tbody>
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdminUser ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                  <td colSpan={isAdminUser ? 8 : 7} className="text-center py-8 text-muted-foreground">
                     No users found.
                   </td>
                 </tr>
@@ -247,6 +272,9 @@ export function UserManagementPage() {
                     <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.email || 'N/A'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.phone || '-'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{ur.profiles?.department || '-'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {ur.profiles?.reports_to ? userNameById.get(ur.profiles.reports_to) || '-' : '-'}
+                    </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(ur.role)}`}
@@ -303,6 +331,7 @@ export function UserManagementPage() {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={error}
+        managerCandidates={managerCandidates}
       />
     </motion.div>
   );
@@ -318,6 +347,7 @@ interface UserFormData {
   phone: string;
   department: string;
   role: AppRole;
+  reports_to: string;
 }
 
 interface UserDialogProps {
@@ -327,9 +357,10 @@ interface UserDialogProps {
   onSubmit: (data: UserFormData) => void;
   isSubmitting: boolean;
   error: string | null;
+  managerCandidates: ManagerOption[];
 }
 
-function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }: UserDialogProps) {
+function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error, managerCandidates }: UserDialogProps) {
   const isEditing = !!user;
 
   const [formData, setFormData] = useState<UserFormData>({
@@ -340,6 +371,7 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
     phone: '',
     department: '',
     role: 'sales_agent',
+    reports_to: '',
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -353,6 +385,7 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
         phone: user.profiles.phone || '',
         department: user.profiles.department || '',
         role: user.role,
+        reports_to: user.profiles.reports_to || '',
       });
     } else {
       setFormData({
@@ -363,10 +396,14 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
         phone: '',
         department: '',
         role: 'sales_agent',
+        reports_to: '',
       });
     }
     setShowPassword(false);
   }, [user, open]);
+
+  // Exclude the user being edited from their own manager list
+  const availableManagers = managerCandidates.filter((m) => m.id !== user?.user_id);
 
   if (!open) return null;
 
@@ -498,6 +535,23 @@ function UserDialog({ open, onOpenChange, user, onSubmit, isSubmitting, error }:
               {APP_ROLES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Reporting To */}
+          <div>
+            <label className="text-sm font-medium">Reporting To</label>
+            <select
+              value={formData.reports_to}
+              onChange={(e) => setFormData((p) => ({ ...p, reports_to: e.target.value }))}
+              className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">— None —</option>
+              {availableManagers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.full_name}
                 </option>
               ))}
             </select>
