@@ -29,10 +29,12 @@ function buildEmailHtml(
 ): string {
   const typeLabel: Record<string, string> = {
     task_assigned: 'New Task Assigned',
+    task_assignment: 'New Task Assigned',
     status_change: 'Status Update',
     comment: 'New Comment',
     task_completed: 'Task Completed',
     task_overdue: 'Task Overdue',
+    milestone_overdue: 'Milestone Overdue',
   };
   const badge = typeLabel[notification.notification_type] || 'Notification';
 

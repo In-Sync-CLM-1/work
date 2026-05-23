@@ -114,6 +114,35 @@ export interface TaskWatcher {
   user_id: string;
 }
 
+export interface TaskMilestone {
+  id: string;
+  task_id: string;
+  title: string;
+  target_date: string;
+  sort_order: number;
+  completed: boolean;
+  completed_at: string | null;
+  completed_by: string | null;
+  last_overdue_reminder_on: string | null;
+  org_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMilestoneInput {
+  title: string;
+  target_date: string;
+  sort_order?: number;
+}
+
+export interface UpdateMilestoneInput {
+  title?: string;
+  target_date?: string;
+  sort_order?: number;
+  completed?: boolean;
+}
+
 export interface Notification {
   id: string;
   user_id: string;

@@ -137,9 +137,17 @@ Deno.serve(async (req) => {
       console.error('Auth user creation failed:', authErr);
       await supabase.from('organizations').delete().eq('id', org.id);
 
-      const message = authErr?.message?.includes('already been registered')
+      const errMsg = authErr?.message ?? '';
+      const errCode = (authErr as { code?: string } | null)?.code ?? '';
+      const isDuplicate =
+        errMsg.includes('already been registered') ||
+        errMsg.includes('already registered') ||
+        errCode === 'email_exists' ||
+        errCode === 'user_already_exists';
+
+      const message = isDuplicate
         ? 'This email is already registered. Please sign in instead.'
-        : 'Failed to create account. Please try again.';
+        : `Failed to create account: ${errMsg || errCode || 'unknown error'}`;
 
       return new Response(
         JSON.stringify({ error: message }),

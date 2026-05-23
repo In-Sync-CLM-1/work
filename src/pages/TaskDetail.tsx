@@ -21,6 +21,8 @@ import { TaskComments } from '@/components/tasks/TaskComments';
 import { TaskAttachments } from '@/components/tasks/TaskAttachments';
 import { AttachmentPreview } from '@/components/tasks/AttachmentPreview';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
+import { MilestoneList } from '@/components/tasks/MilestoneList';
+import { useMilestones } from '@/hooks/useMilestones';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
 import { StartTaskDialog } from '@/components/tasks/StartTaskDialog';
@@ -41,6 +43,7 @@ export function TaskDetailPage() {
   const { createTask: createSubtask } = useTasks({ page: 1, items_per_page: 1 });
   const startTask = useStartTask();
   const completeTask = useCompleteTask();
+  const { milestones, addMilestone, updateMilestone, deleteMilestone } = useMilestones(id!);
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [subtaskDialogOpen, setSubtaskDialogOpen] = useState(false);
@@ -317,6 +320,19 @@ export function TaskDetailPage() {
           />
         </div>
       )}
+
+      {/* Milestones */}
+      <div className="rounded-lg border bg-card p-6 mb-6">
+        <MilestoneList
+          milestones={milestones}
+          parentTask={task}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onAdd={async (input) => addMilestone.mutateAsync(input)}
+          onUpdate={async (id, updates) => updateMilestone.mutateAsync({ id, updates })}
+          onDelete={async (id) => deleteMilestone.mutateAsync(id)}
+        />
+      </div>
 
       {/* Attachments */}
       <div className="rounded-lg border bg-card p-6 mb-6">
