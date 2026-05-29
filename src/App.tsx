@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { ThemeProvider } from '@/lib/theme-context';
 import { Layout } from '@/components/Layout';
 import { DashboardPage } from '@/pages/Dashboard';
 import { PlatformDashboard } from '@/pages/PlatformDashboard';
@@ -115,14 +116,16 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <AuthProvider>
-          <AppRoutes />
-          <Toaster position="top-right" richColors />
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <AuthProvider>
+            <AppRoutes />
+            <Toaster position="top-right" richColors />
+          </AuthProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -99,6 +99,15 @@
     </script>
   </head>
   <body>
+    <script>
+      // Apply saved theme before React mounts to avoid a flash
+      (function () {
+        try {
+          var t = localStorage.getItem('app-theme');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script src="https://crm.in-sync.co.in/help-widget.js" data-source="task"></script>

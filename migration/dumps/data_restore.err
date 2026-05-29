@@ -1,0 +1,6 @@
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:647: ERROR:  permission denied for table buckets_vectors
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:648: error: invalid command \.
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:684: ERROR:  permission denied for table vector_indexes
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:685: error: invalid command \.
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:699: ERROR:  permission denied for sequence jobid_seq
+psql:C:/Users/Admin/work/migration/dumps/data_clean.sql:706: ERROR:  permission denied for sequence runid_seq
