@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Wallet, IndianRupee, CreditCard, CheckCircle, Receipt, Crown, Phone, Clock,
-  AlertTriangle, ArrowRight, Sparkles, Mail, MessageCircle, Check,
+  AlertTriangle, ArrowRight, Sparkles, Mail, MessageCircle, Check, Loader2,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useOrgBilling } from '@/hooks/useOrgBilling';
+import { supabase } from '@/lib/supabase';
 import {
   PLANS, CYCLE_LABELS, CYCLE_MONTHS, CYCLE_DISCOUNT, calculatePlanTotal,
+  calcGst, calcGrandTotal, GST_PERCENT,
   WHATSAPP_PER_MESSAGE, WHATSAPP_MIN_RECHARGE, TRIAL_DAYS, fmtINR, fmtINRDecimal,
 } from '@/lib/pricing';
 import type { PaidPlan, BillingCycle } from '@/lib/pricing';
@@ -15,6 +18,35 @@ import { cn } from '@/lib/utils';
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } };
+
+interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayInstance {
+  open: () => void;
+  on: (event: string, handler: (resp: { error?: { description?: string } }) => void) => void;
+}
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => RazorpayInstance;
+  }
+}
+
+/** Lazily load Razorpay's checkout script — only when the user clicks Pay. */
+function loadRazorpay(): Promise<void> {
+  if (typeof window !== 'undefined' && window.Razorpay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Could not load the payment gateway. Check your connection and retry.'));
+    document.body.appendChild(s);
+  });
+}
 
 const METHOD_LABELS: Record<string, string> = {
   upi: 'UPI', bank_transfer: 'Bank Transfer', card: 'Card', cash: 'Cash', manual: 'Manual',
@@ -25,8 +57,9 @@ function formatDate(iso: string) {
 }
 
 export function BillingPage() {
-  const { orgPlan, trialDaysLeft, isTrialExpired, orgId } = useAuth();
+  const { orgPlan, trialDaysLeft, isTrialExpired, orgId, user, userName, refreshAuth } = useAuth();
   const { data } = useOrgBilling(orgId);
+  const qc = useQueryClient();
   const isOnTrial = orgPlan === 'trial';
 
   const members = data?.members ?? 1;
@@ -34,6 +67,9 @@ export function BillingPage() {
 
   const [selectedPlan, setSelectedPlan] = useState<PaidPlan>('team');
   const [cycle, setCycle] = useState<BillingCycle>('quarterly');
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [paySuccess, setPaySuccess] = useState(false);
 
   const activePlanDef = useMemo(
     () => PLANS.find((p) => p.id === orgPlan) ?? null,
@@ -42,6 +78,70 @@ export function BillingPage() {
   const selectedDef = PLANS.find((p) => p.id === selectedPlan)!;
 
   const projectedTotal = calculatePlanTotal(selectedPlan, Math.max(members, 1), cycle);
+  const gstAmount = calcGst(projectedTotal);
+  const grandTotal = calcGrandTotal(projectedTotal);
+
+  async function handlePay() {
+    setPayError(null);
+    setPaySuccess(false);
+    setPaying(true);
+    try {
+      await loadRazorpay();
+
+      // 1. Server creates the order and recomputes the amount authoritatively.
+      const { data: order, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { plan: selectedPlan, cycle },
+      });
+      if (error || !order?.order_id) {
+        throw new Error(order?.error || error?.message || 'Could not start the payment.');
+      }
+
+      // 2. Open the Razorpay popup and wait for the outcome.
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.key_id,
+          amount: order.amount_in_paise,
+          currency: order.currency,
+          name: 'Work-Sync',
+          description: `${selectedDef.name} plan · ${CYCLE_LABELS[cycle]} · ${order.seats} seat(s)`,
+          order_id: order.order_id,
+          prefill: { name: userName || '', email: user?.email || '' },
+          notes: { plan: selectedPlan, cycle },
+          theme: { color: '#7c3aed' },
+          modal: { ondismiss: () => reject(new Error('Payment cancelled')) },
+          handler: async (resp: RazorpayResponse) => {
+            try {
+              // 3. Server verifies the signature, then upgrades the plan.
+              const { data: v, error: vErr } = await supabase.functions.invoke('verify-razorpay-payment', {
+                body: {
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_signature: resp.razorpay_signature,
+                  payment_id: order.payment_id,
+                },
+              });
+              if (vErr || !v?.ok) throw new Error(v?.error || vErr?.message || 'Payment verification failed.');
+              resolve();
+            } catch (err) {
+              reject(err);
+            }
+          },
+        });
+        rzp.on('payment.failed', (r) => reject(new Error(r?.error?.description || 'Payment failed.')));
+        rzp.open();
+      });
+
+      // 4. Refresh the session so the new plan — and the trial gate — update at once.
+      await refreshAuth();
+      qc.invalidateQueries({ queryKey: ['org-billing'] });
+      setPaySuccess(true);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Something went wrong.';
+      if (msg !== 'Payment cancelled') setPayError(msg);
+    } finally {
+      setPaying(false);
+    }
+  }
 
   // If org is on a paid plan, show "renewal" projection too
   const renewalAmount = activePlanDef
@@ -243,23 +343,55 @@ export function BillingPage() {
                   {CYCLE_DISCOUNT[cycle] > 0 && ` − ${Math.round(CYCLE_DISCOUNT[cycle] * 100)}% commit discount`}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="text-right min-w-[190px]">
+                <div className="space-y-0.5 mb-1.5">
+                  <div className="flex items-center justify-between gap-6 text-xs text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span className="font-medium text-foreground/80">{fmtINR(projectedTotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-6 text-xs text-muted-foreground">
+                    <span>GST ({GST_PERCENT}%)</span>
+                    <span className="font-medium text-foreground/80">{fmtINR(gstAmount)}</span>
+                  </div>
+                </div>
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Total payable</p>
                 <p className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent leading-tight">
-                  {fmtINR(projectedTotal)}
+                  {fmtINR(grandTotal)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">Inclusive of subscription only</p>
+                <p className="text-[10px] text-muted-foreground">Incl. {GST_PERCENT}% GST</p>
               </div>
-              <a
-                href="https://wa.me/919999999999?text=I%20want%20to%20upgrade%20my%20Work-Sync%20plan"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm font-semibold shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 transition-all hover:-translate-y-0.5"
+              <button
+                type="button"
+                onClick={handlePay}
+                disabled={paying}
+                className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm font-semibold shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
-                Pay & Upgrade
-                <ArrowRight className="h-4 w-4" />
-              </a>
+                {paying ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    Pay &amp; Upgrade
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
             </div>
+
+            {payError && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>{payError}</span>
+              </div>
+            )}
+            {paySuccess && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs text-emerald-700">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>Payment successful — your <strong>Work-Sync {selectedDef.name}</strong> plan is now active. Full access has been restored.</span>
+              </div>
+            )}
             <div className="mt-4 pt-4 border-t border-violet-200/50 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
               <ContactRow icon={MessageCircle} label="WhatsApp" value="+91 99999 99999" color="text-emerald-600" />
               <ContactRow icon={Mail} label="Email" value="billing@in-sync.co.in" color="text-sky-600" />
