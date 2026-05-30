@@ -387,6 +387,18 @@ verify_jwt = false
 [functions.send-summary]
 verify_jwt = false
 
+# Razorpay checkout. Order + verify require a logged-in user (verify_jwt = true).
+# The webhook is called by Razorpay (no user JWT) and authenticates via its own
+# signature, so it must be public.
+[functions.create-razorpay-order]
+verify_jwt = true
+
+[functions.verify-razorpay-payment]
+verify_jwt = true
+
+[functions.razorpay-webhook]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327

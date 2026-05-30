@@ -30,6 +30,7 @@ export function useOrgBilling(orgId: string | null) {
           .from('payments')
           .select('id, amount, method, plan_target, reference_no, notes, created_at')
           .eq('org_id', orgId!)
+          .eq('status', 'paid')
           .order('created_at', { ascending: false }),
       ]);
       const data: OrgBillingData = {

@@ -101,6 +101,19 @@ export function calculatePlanTotal(plan: PaidPlan, users: number, cycle: Billing
   return Math.round(gross * (1 - discount));
 }
 
+/** GST applied on top of the subscription subtotal at checkout. */
+export const GST_PERCENT = 18;
+
+/** GST amount for a subtotal, rounded to 2 decimal places. */
+export function calcGst(base: number): number {
+  return Math.round(base * GST_PERCENT) / 100;
+}
+
+/** Grand total payable (subtotal + GST). */
+export function calcGrandTotal(base: number): number {
+  return Math.round((base + calcGst(base)) * 100) / 100;
+}
+
 export const WHATSAPP_PER_MESSAGE = 0.2;
 export const WHATSAPP_MIN_RECHARGE = 500;
 export const TRIAL_DAYS = 14;
