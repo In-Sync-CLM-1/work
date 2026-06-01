@@ -6,6 +6,8 @@ import {
   MessageSquare, BarChart3, Sparkles, Clock, AlertTriangle,
   Bell, Shield, Check, Crown, Phone, Mail, Zap, Star,
 } from 'lucide-react';
+import { DemoRequestModal } from '@/components/DemoRequestModal';
+import { captureAttribution } from '@/lib/attribution';
 
 /* ── GA4 Lead Tracking ───────────────────── */
 
@@ -224,6 +226,12 @@ export function LandingPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
 
+  // Capture gclid / utm from the ad landing URL so a demo request can be tied
+  // back to the Google Ads click for conversion reporting.
+  useEffect(() => {
+    captureAttribution();
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* ── Header ──────────────────────── */}
@@ -244,6 +252,9 @@ export function LandingPage() {
             <Link to="/auth" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Sign In
             </Link>
+            <DemoRequestModal className="hidden sm:inline text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              Book a Demo
+            </DemoRequestModal>
             <Link
               to="/register"
               onClick={() => trackLeadEvent('header_get_started')}
@@ -322,13 +333,9 @@ export function LandingPage() {
               Start Free — No Card Needed
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <a
-              href="#how-it-works"
-              onClick={() => trackLeadEvent('hero_see_how_it_works')}
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border font-medium hover:bg-muted transition-all hover:scale-105"
-            >
-              See How It Works
-            </a>
+            <DemoRequestModal className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border font-medium hover:bg-muted transition-all hover:scale-105">
+              Request a Demo
+            </DemoRequestModal>
           </motion.div>
 
           <motion.div
@@ -738,14 +745,19 @@ export function LandingPage() {
                 <p className="text-white/80 mb-10 max-w-md mx-auto text-lg">
                   Give your team accountability that actually works. 14-day free trial, no card needed.
                 </p>
-                <Link
-                  to="/register"
-                  onClick={() => trackLeadEvent('cta_get_started_free')}
-                  className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
-                >
-                  Get Started Free
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Link
+                    to="/register"
+                    onClick={() => trackLeadEvent('cta_get_started_free')}
+                    className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
+                  >
+                    Get Started Free
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <DemoRequestModal className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border border-white/40 text-white font-semibold hover:bg-white/10 transition-all hover:scale-105">
+                    Request a Demo
+                  </DemoRequestModal>
+                </div>
               </div>
             </motion.div>
           </AnimatedSection>
