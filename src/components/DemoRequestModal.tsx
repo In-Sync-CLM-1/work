@@ -18,6 +18,16 @@ import { getAttribution } from '@/lib/attribution';
 // nothing secret in the bundle). Leads land in the In-Sync CRM, auto-assigned
 // to the WorkSync calling agent.
 const INTAKE_URL = 'https://ejzjrvazegaxrhqizgaa.supabase.co/functions/v1/web-lead-intake';
+const AVAILABILITY_URL = 'https://ejzjrvazegaxrhqizgaa.supabase.co/functions/v1/demo-availability';
+
+// "11:00" -> "11:00 AM", "17:00" -> "5:00 PM"
+function fmt12(t: string): string {
+  const [h, m] = t.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const EMPTY = {
   name: '', phone: '', email: '', company: '', message: '', _hp: '',
@@ -40,6 +50,23 @@ export function DemoRequestModal({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
+  const [slots, setSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Fetch the host's open demo slots for a date (greys out booked ones).
+  async function loadSlots(date: string) {
+    if (!date) { setSlots([]); return; }
+    setLoadingSlots(true);
+    try {
+      const r = await fetch(`${AVAILABILITY_URL}?date=${encodeURIComponent(date)}`);
+      const j = await r.json();
+      setSlots(Array.isArray(j.slots) ? j.slots : []);
+    } catch {
+      setSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
 
   const field =
     (k: keyof typeof form) =>
@@ -162,10 +189,34 @@ export function DemoRequestModal({
                 </select>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <Input type="date" aria-label="Preferred demo date" value={form.preferred_date} onChange={field('preferred_date')} />
-                  <Input type="time" aria-label="Preferred time" value={form.preferred_time} onChange={field('preferred_time')} />
+                  <Input
+                    type="date"
+                    aria-label="Preferred demo date"
+                    min={todayStr()}
+                    value={form.preferred_date}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, preferred_date: e.target.value, preferred_time: '' }));
+                      loadSlots(e.target.value);
+                    }}
+                  />
+                  <select
+                    aria-label="Preferred time"
+                    value={form.preferred_time}
+                    onChange={field('preferred_time')}
+                    disabled={!form.preferred_date || loadingSlots}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  >
+                    <option value="">
+                      {!form.preferred_date ? 'Pick a date first' : loadingSlots ? 'Loading…' : 'Preferred time'}
+                    </option>
+                    {slots.map((s) => (
+                      <option key={s.time} value={s.time} disabled={!s.available}>
+                        {fmt12(s.time)}{s.available ? '' : ' — booked'}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <p className="-mt-1 text-xs text-muted-foreground">Preferred demo day & time (we'll confirm on a quick call)</p>
+                <p className="-mt-1 text-xs text-muted-foreground">Preferred demo day & time (booked slots are greyed out; we'll confirm on a quick call)</p>
 
                 <Textarea
                   placeholder="Anything we should know? (optional)"
