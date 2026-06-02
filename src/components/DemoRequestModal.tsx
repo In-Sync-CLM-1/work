@@ -30,9 +30,21 @@ function fmt12(t: string): string {
 const todayStr = () => new Date().toISOString().slice(0, 10);
 
 const EMPTY = {
-  name: '', phone: '', email: '', company: '', message: '', _hp: '',
+  name: '', phone: '', email: '', company: '', designation: '', message: '', _hp: '',
   team_size: '', preferred_date: '', preferred_time: '',
 };
+
+// Role/designation options — mirror WorkSync's own MD → VP → Manager → Executive
+// hierarchy so we can learn which roles convert and tighten ad targeting to them.
+const DESIGNATIONS = [
+  'Founder / Owner / Director',
+  'CXO / VP / Head of Department',
+  'Operations Manager',
+  'Branch / Area Manager',
+  'Team Lead / Supervisor',
+  'Admin / HR',
+  'Other',
+];
 
 /**
  * "Request a Demo" button + modal. Renders its own trigger button (styled via
@@ -100,6 +112,7 @@ export function DemoRequestModal({
           phone: form.phone,
           email: form.email,
           company: form.company,
+          designation: form.designation,
           message: form.message,
           team_size: form.team_size,
           preferred_date: form.preferred_date,
@@ -176,6 +189,18 @@ export function DemoRequestModal({
                 />
                 <Input type="email" placeholder="Work email" value={form.email} onChange={field('email')} />
                 <Input placeholder="Company" value={form.company} onChange={field('company')} />
+
+                <select
+                  value={form.designation}
+                  onChange={field('designation')}
+                  aria-label="Your role"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Your role — what's your designation?</option>
+                  {DESIGNATIONS.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
 
                 <select
                   value={form.team_size}
