@@ -19,7 +19,10 @@ import { getAttribution } from '@/lib/attribution';
 // to the WorkSync calling agent.
 const INTAKE_URL = 'https://ejzjrvazegaxrhqizgaa.supabase.co/functions/v1/web-lead-intake';
 
-const EMPTY = { name: '', phone: '', email: '', company: '', message: '', _hp: '' };
+const EMPTY = {
+  name: '', phone: '', email: '', company: '', message: '', _hp: '',
+  team_size: '', preferred_date: '', preferred_time: '',
+};
 
 /**
  * "Request a Demo" button + modal. Renders its own trigger button (styled via
@@ -40,7 +43,7 @@ export function DemoRequestModal({
 
   const field =
     (k: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((f) => ({ ...f, [k]: e.target.value }));
 
   function close(o: boolean) {
@@ -71,6 +74,9 @@ export function DemoRequestModal({
           email: form.email,
           company: form.company,
           message: form.message,
+          team_size: form.team_size,
+          preferred_date: form.preferred_date,
+          preferred_time: form.preferred_time,
           _hp: form._hp,
           gclid: attr.gclid,
           utm_source: attr.utm_source,
@@ -143,6 +149,24 @@ export function DemoRequestModal({
                 />
                 <Input type="email" placeholder="Work email" value={form.email} onChange={field('email')} />
                 <Input placeholder="Company" value={form.company} onChange={field('company')} />
+
+                <select
+                  value={form.team_size}
+                  onChange={field('team_size')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Team size — how many people would use it?</option>
+                  <option value="Under 10">Under 10</option>
+                  <option value="10 to 50">10 to 50</option>
+                  <option value="More than 50">More than 50</option>
+                </select>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="date" aria-label="Preferred demo date" value={form.preferred_date} onChange={field('preferred_date')} />
+                  <Input type="time" aria-label="Preferred time" value={form.preferred_time} onChange={field('preferred_time')} />
+                </div>
+                <p className="-mt-1 text-xs text-muted-foreground">Preferred demo day & time (we'll confirm on a quick call)</p>
+
                 <Textarea
                   placeholder="Anything we should know? (optional)"
                   value={form.message}
