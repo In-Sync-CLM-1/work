@@ -22,7 +22,7 @@ const DESIGNATIONS = [
   'Other',
 ];
 
-const EMPTY = { name: '', phone: '', company: '', designation: '', _hp: '' };
+const EMPTY = { name: '', phone: '', email: '', company: '', designation: '', _hp: '' };
 
 /**
  * Compact demo-request form designed to sit IN the hero (first frame) so the ad
@@ -43,8 +43,8 @@ export function HeroLeadForm() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim()) {
-      toast.error('Please add your name and phone number.');
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
+      toast.error('Please add your name, phone number and email.');
       return;
     }
     setSubmitting(true);
@@ -57,6 +57,7 @@ export function HeroLeadForm() {
           product: 'Worksync',
           name: form.name,
           phone: form.phone,
+          email: form.email,
           company: form.company,
           designation: form.designation,
           _hp: form._hp,
@@ -115,6 +116,13 @@ export function HeroLeadForm() {
           value={form.phone}
           onChange={field('phone')}
           inputMode="tel"
+          required
+        />
+        <Input
+          type="email"
+          placeholder="Work email *"
+          value={form.email}
+          onChange={field('email')}
           required
         />
         <Input placeholder="Company" value={form.company} onChange={field('company')} />
