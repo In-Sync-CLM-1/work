@@ -79,6 +79,9 @@ export function HeroLeadForm() {
           form_type: 'demo',
           cta_label: 'hero_inline_demo',
         });
+        // Google Ads native conversion (SUBMIT_LEAD_FORM) — fires on a real,
+        // successful submit so spam/failed posts aren't counted.
+        gtag('event', 'conversion_event_submit_lead_form');
       }
       setDone(true);
     } catch {

@@ -136,6 +136,9 @@ export function DemoRequestModal({
           form_type: 'demo',
           cta_label: 'request_a_demo',
         });
+        // Google Ads native conversion (SUBMIT_LEAD_FORM) — fires on a real,
+        // successful submit so spam/failed posts aren't counted.
+        gtag('event', 'conversion_event_submit_lead_form');
       }
       setDone(true);
     } catch {
