@@ -30,7 +30,7 @@ interface AuthContextType {
   orgName: string;
   orgLogo: string;
   orgPlan: string;
-  trialDaysLeft: number;
+  trialDaysLeft: number | null;
   isTrialExpired: boolean;
 
   // Roles & permissions
@@ -251,10 +251,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = userRole === 'admin';
   const isManager = isAdmin || userRole === 'sales_manager' || userRole === 'support_manager';
 
+  // null = unknown (org not loaded yet) — prevents a false "expires in 0 days" flash right after registration
   const trialDaysLeft = organization
     ? Math.ceil((new Date(organization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
-  const isTrialExpired = !isPlatformAdmin && !!organization && organization.plan === 'trial' && trialDaysLeft <= 0;
+    : null;
+  const isTrialExpired = !isPlatformAdmin && !!organization && organization.plan === 'trial' && trialDaysLeft !== null && trialDaysLeft <= 0;
 
   const value: AuthContextType = {
     session,

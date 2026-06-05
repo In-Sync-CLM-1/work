@@ -41,7 +41,7 @@ export function Layout({ children }: LayoutProps) {
     if (isMobile) setSidebarOpen(false);
   }, [location.pathname, isMobile]);
 
-  const showTrialBanner = !isPlatformAdmin && orgPlan === 'trial' && (isTrialExpired || trialDaysLeft <= 5);
+  const showTrialBanner = !isPlatformAdmin && orgPlan === 'trial' && trialDaysLeft !== null && (isTrialExpired || trialDaysLeft <= 5);
 
   const isOnTasks = location.pathname === '/tasks';
 
@@ -319,7 +319,7 @@ export function Layout({ children }: LayoutProps) {
           <div className={`flex items-center gap-3 rounded-xl px-4 py-3 mb-4 text-sm ${
             isTrialExpired
               ? 'bg-destructive/10 border border-destructive/30 text-destructive'
-              : trialDaysLeft <= 2
+              : (trialDaysLeft ?? 0) <= 2
               ? 'bg-orange-50 border border-orange-200 text-orange-800'
               : 'bg-amber-50 border border-amber-200 text-amber-800'
           }`}>
@@ -330,7 +330,7 @@ export function Layout({ children }: LayoutProps) {
             <span className="flex-1">
               {isTrialExpired
                 ? 'Your 14-day free trial has expired.'
-                : `Your free trial expires in ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'}.`
+                : `Your free trial expires in ${trialDaysLeft ?? 0} day${trialDaysLeft === 1 ? '' : 's'}.`
               }
             </span>
             <Link

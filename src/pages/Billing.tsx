@@ -171,7 +171,7 @@ export function BillingPage() {
             'rounded-2xl border p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4',
             isTrialExpired
               ? 'border-destructive/40 bg-destructive/5'
-              : trialDaysLeft <= 2
+              : (trialDaysLeft ?? 14) <= 2
               ? 'border-orange-200 bg-orange-50/60'
               : 'border-amber-200 bg-amber-50/60'
           )}>
@@ -188,7 +188,7 @@ export function BillingPage() {
               <h3 className="font-bold text-sm md:text-base">
                 {isTrialExpired
                   ? 'Your free trial has ended'
-                  : `Free trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining`}
+                  : `Free trial — ${trialDaysLeft ?? 14} day${trialDaysLeft === 1 ? '' : 's'} remaining`}
               </h3>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 {isTrialExpired
