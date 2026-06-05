@@ -112,7 +112,7 @@ export function HeroLeadForm() {
       <form onSubmit={submit} className="mt-4 space-y-3">
         <Input placeholder="Your name *" value={form.name} onChange={field('name')} required />
         <Input
-          placeholder="Phone (WhatsApp) *"
+          placeholder="Phone *"
           value={form.phone}
           onChange={field('phone')}
           inputMode="tel"
