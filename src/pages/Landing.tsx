@@ -7,6 +7,7 @@ import {
   Bell, Shield, Check, Crown, Phone, Mail, Zap, Star,
 } from 'lucide-react';
 import { DemoRequestModal } from '@/components/DemoRequestModal';
+import { HeroLeadForm } from '@/components/HeroLeadForm';
 import { captureAttribution } from '@/lib/attribution';
 
 /* ── GA4 Lead Tracking ───────────────────── */
@@ -283,79 +284,92 @@ export function LandingPage() {
 
         <FloatingParticles />
 
-        <motion.div style={{ y: heroY }} className="mx-auto max-w-4xl text-center px-6 py-28 lg:py-40">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6, type: 'spring', stiffness: 200 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-            </span>
-            Part of the In-Sync family
-          </motion.div>
+        <motion.div
+          style={{ y: heroY }}
+          className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:py-32"
+        >
+          {/* Left: the pitch */}
+          <div className="text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.6, type: 'spring', stiffness: 200 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              Part of the In-Sync family
+            </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-            className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight"
-          >
-            You gave the task.{' '}
-            <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
-              Do you know if it's done?
-            </span>
-          </motion.h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight"
+            >
+              You gave the task.{' '}
+              <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+                Do you know if it's done?
+              </span>
+            </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-6 text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto"
-          >
-            Hierarchical task accountability with WhatsApp + email alerts at every step
-            — built for how Indian teams actually work.
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="mt-6 text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0"
+            >
+              Hierarchical task accountability with WhatsApp + email alerts at every step
+              — built for how Indian teams actually work.
+            </motion.p>
 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+              className="mt-10 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-muted-foreground"
+            >
+              <span className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-emerald-500" />
+                WhatsApp alerts
+              </span>
+              <span className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-blue-500" />
+                Email notifications
+              </span>
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                Designation hierarchy
+              </span>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="mt-8 text-sm text-muted-foreground"
+            >
+              Prefer to explore on your own?{' '}
+              <Link
+                to="/register"
+                onClick={() => trackLeadEvent('hero_start_free')}
+                className="font-semibold text-primary hover:underline"
+              >
+                Start a 14-day free trial — no card needed
+              </Link>
+            </motion.p>
+          </div>
+
+          {/* Right: the demo form, in the first frame — no click-through */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.45 }}
-            className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="mx-auto w-full max-w-md lg:mx-0"
           >
-            <Link
-              to="/register"
-              onClick={() => trackLeadEvent('hero_start_free')}
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-primary text-primary-foreground font-medium shadow-lg shadow-primary/25 hover:bg-primary/90 transition-all hover:scale-105"
-            >
-              Start Free — No Card Needed
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <DemoRequestModal className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border font-medium hover:bg-muted transition-all hover:scale-105">
-              Request a Demo
-            </DemoRequestModal>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className="mt-14 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground"
-          >
-            <span className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-emerald-500" />
-              WhatsApp alerts
-            </span>
-            <span className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-blue-500" />
-              Email notifications
-            </span>
-            <span className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              Designation hierarchy
-            </span>
+            <HeroLeadForm />
           </motion.div>
         </motion.div>
       </section>
