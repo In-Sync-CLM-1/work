@@ -22,6 +22,7 @@ import { TaskAttachments } from '@/components/tasks/TaskAttachments';
 import { AttachmentPreview } from '@/components/tasks/AttachmentPreview';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
 import { MilestoneList } from '@/components/tasks/MilestoneList';
+import { ProjectProgress } from '@/components/tasks/ProjectProgress';
 import { useMilestones } from '@/hooks/useMilestones';
 import { TaskDialog } from '@/components/tasks/TaskDialog';
 import { SubtaskDialog } from '@/components/tasks/SubtaskDialog';
@@ -301,6 +302,13 @@ export function TaskDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Project Progress — milestone timeline + completion map (parent tasks) */}
+      {!task.parent_task_id && ((task.subtasks?.length ?? 0) > 0 || milestones.length > 0) && (
+        <div className="mb-6">
+          <ProjectProgress task={task} subtasks={task.subtasks || []} milestones={milestones} />
+        </div>
+      )}
 
       {/* Subtasks */}
       {!task.parent_task_id && (
