@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
-import type { Task, TaskFilters as TaskFiltersType, CreateTaskInput, UpdateTaskInput } from '@/types/task';
+import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle, List, Columns3, GanttChartSquare } from 'lucide-react';
+import type { Task, TaskStatus, TaskFilters as TaskFiltersType, CreateTaskInput, UpdateTaskInput } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
 import { useTasks } from '@/hooks/useTasks';
+import { useTaskBoard } from '@/hooks/useTaskBoard';
+import { TaskBoard } from '@/components/tasks/TaskBoard';
+import { TaskTimeline } from '@/components/tasks/TaskTimeline';
 import { useProfiles } from '@/hooks/useProfiles';
 import { useTaskStats } from '@/hooks/useTaskStats';
 import { useStartTask } from '@/hooks/useStartTask';
@@ -37,7 +40,15 @@ export function TasksPage() {
     setFilters((prev) => ({ ...prev, status: urlStatus, page: 1 }));
   }, [searchParams]);
 
+  const view = (searchParams.get('view') as 'list' | 'board' | 'timeline') || 'list';
+  const setView = (v: 'list' | 'board' | 'timeline') => {
+    const next = new URLSearchParams(searchParams);
+    if (v === 'list') next.delete('view'); else next.set('view', v);
+    setSearchParams(next, { replace: true });
+  };
+
   const { tasks, totalCount, isLoading, createTask, updateTask } = useTasks(filters);
+  const board = useTaskBoard({ priority: filters.priority, assigned_to: filters.assigned_to, search: filters.search });
   const { profiles } = useProfiles();
   const { stats } = useTaskStats();
   const startTask = useStartTask();
@@ -139,15 +150,15 @@ export function TasksPage() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex gap-6">
-      {/* Main Content */}
-      <div className="flex-1 min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Tasks</h1>
-            <p className="text-sm text-muted-foreground">{totalCount || 0} total tasks</p>
-          </div>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Tasks</h1>
+          <p className="text-sm text-muted-foreground">{totalCount || 0} total tasks</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <ViewSwitcher view={view} onChange={setView} />
           <button
             onClick={() => { setEditingTask(null); setTaskDialogOpen(true); }}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
@@ -156,7 +167,33 @@ export function TasksPage() {
             New Task
           </button>
         </div>
+      </div>
 
+      {/* Board (Kanban) */}
+      {view === 'board' && (
+        board.isLoading
+          ? <div className="text-center py-12 text-muted-foreground">Loading board...</div>
+          : <TaskBoard
+              tasks={board.tasks}
+              milestonesByTask={board.milestonesByTask}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              onMove={(id, status: TaskStatus) => board.updateStatus.mutate({ id, status })}
+            />
+      )}
+
+      {/* Timeline (Gantt) */}
+      {view === 'timeline' && (
+        board.isLoading
+          ? <div className="text-center py-12 text-muted-foreground">Loading timeline...</div>
+          : <TaskTimeline tasks={board.tasks} milestonesByTask={board.milestonesByTask} />
+      )}
+
+      {/* List */}
+      {view === 'list' && (
+      <div className="flex gap-6">
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
         {/* Filters */}
         <TaskFilters
           filters={filters}
@@ -269,6 +306,8 @@ export function TasksPage() {
           )}
         </div>
       </div>
+      </div>
+      )}
 
       {/* Dialogs */}
       <TaskDialog
@@ -323,5 +362,34 @@ export function TasksPage() {
         />
       )}
     </motion.div>
+  );
+}
+
+function ViewSwitcher({ view, onChange }: { view: 'list' | 'board' | 'timeline'; onChange: (v: 'list' | 'board' | 'timeline') => void }) {
+  const tabs: { key: 'list' | 'board' | 'timeline'; label: string; icon: typeof List }[] = [
+    { key: 'list', label: 'List', icon: List },
+    { key: 'board', label: 'Board', icon: Columns3 },
+    { key: 'timeline', label: 'Timeline', icon: GanttChartSquare },
+  ];
+  return (
+    <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-card p-0.5">
+      {tabs.map((t) => {
+        const Icon = t.icon;
+        const active = view === t.key;
+        return (
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            className={
+              'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ' +
+              (active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted')
+            }
+          >
+            <Icon className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
