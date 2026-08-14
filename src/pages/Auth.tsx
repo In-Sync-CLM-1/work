@@ -4,6 +4,20 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
+// RMPL is the fleet's identity provider — this is the same "sign in once,
+// use everywhere" trust as RMPL's own login, not a third-party OAuth provider.
+const RMPL_SSO_URL = 'https://rmpl.in-sync.co.in/sso/authorize';
+
+function continueWithRmpl() {
+  const state = crypto.randomUUID();
+  sessionStorage.setItem('sso_state', state);
+  const redirectUri = `${window.location.origin}/sso/callback`;
+  const url = new URL(RMPL_SSO_URL);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('state', state);
+  window.location.href = url.toString();
+}
+
 export function AuthPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -126,6 +140,20 @@ export function AuthPage() {
           </div>
 
           <div className="rounded-2xl border bg-card p-8 shadow-xl">
+            <button
+              type="button"
+              onClick={continueWithRmpl}
+              className="w-full h-11 text-sm font-medium rounded-lg border border-input bg-background hover:bg-muted transition-colors"
+            >
+              Continue with RMPL
+            </button>
+
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or sign in with email</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Email</label>
