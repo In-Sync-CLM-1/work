@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { TaskAttachment, AttachmentType } from '@/types/task';
 import { supabase } from '@/lib/supabase';
+import { deleteFromR2, signR2Url, uploadToR2 } from '@/lib/r2Storage';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 
@@ -36,23 +37,19 @@ export function useTaskAttachments(taskId: string) {
       file: File;
       type: AttachmentType;
     }) => {
-      const filePath = `tasks/${taskId}/${type}/${Date.now()}_${file.name}`;
-
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('task-attachments')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
+      // Upload to R2; the returned key is what we persist as file_path.
+      const { key } = await uploadToR2(
+        'task-attachments',
+        `tasks/${taskId}/${type}/${Date.now()}_${file.name}`,
+        file,
+      );
 
       // Insert attachment record
       const { data, error } = await supabase
         .from('task_attachments')
         .insert({
           task_id: taskId,
-          file_path: filePath,
+          file_path: key,
           file_name: file.name,
           file_size: file.size,
           file_type: file.type,
@@ -84,13 +81,7 @@ export function useTaskAttachments(taskId: string) {
   const deleteAttachment = useMutation({
     mutationFn: async ({ id, filePath }: { id: string; filePath: string }) => {
       // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('task-attachments')
-        .remove([filePath]);
-
-      if (storageError) {
-        throw storageError;
-      }
+      await deleteFromR2(filePath);
 
       // Delete record
       const { error } = await supabase
@@ -112,20 +103,9 @@ export function useTaskAttachments(taskId: string) {
     },
   });
 
-  const getDownloadUrl = async (
-    filePath: string,
-    options?: { download?: boolean | string },
-  ): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('task-attachments')
-      .createSignedUrl(filePath, 3600, options); // 1 hour expiry
-
-    if (error) {
-      throw error;
-    }
-
-    return data.signedUrl;
-  };
+  // Signed for an hour. Callers that trigger a download set the filename
+  // themselves via the anchor's download attribute.
+  const getDownloadUrl = (filePath: string): Promise<string> => signR2Url(filePath, 3600);
 
   return {
     attachments,

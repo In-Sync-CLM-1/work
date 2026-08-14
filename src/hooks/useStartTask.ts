@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { uploadToR2 } from '@/lib/r2Storage';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 
@@ -10,17 +11,17 @@ export function useStartTask() {
   return useMutation({
     mutationFn: async ({ taskId, files }: { taskId: string; files: File[] }) => {
       for (const file of files) {
-        const filePath = `tasks/${taskId}/reference/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('task-attachments')
-          .upload(filePath, file);
-        if (uploadError) throw uploadError;
+        const { key } = await uploadToR2(
+          'task-attachments',
+          `tasks/${taskId}/reference/${Date.now()}_${file.name}`,
+          file,
+        );
 
         const { error: attachError } = await supabase
           .from('task_attachments')
           .insert({
             task_id: taskId,
-            file_path: filePath,
+            file_path: key,
             file_name: file.name,
             file_size: file.size,
             file_type: file.type,
