@@ -9,7 +9,6 @@ import { PlatformDashboard } from '@/pages/PlatformDashboard';
 import { TasksPage } from '@/pages/Tasks';
 import { TaskDetailPage } from '@/pages/TaskDetail';
 import { AuthPage } from '@/pages/Auth';
-import { SsoCallbackPage } from '@/pages/SsoCallback';
 import { LandingPage } from '@/pages/Landing';
 import { OnboardingPage } from '@/pages/Onboarding';
 import { UserManagementPage } from '@/pages/UserManagement';
@@ -91,7 +90,6 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
-      <Route path="/sso/callback" element={<SsoCallbackPage />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <OnboardingPage />} />
       <Route path="/demo" element={<Demo />} />
 

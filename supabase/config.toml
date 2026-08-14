@@ -375,9 +375,6 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
-[functions.sso-exchange]
-verify_jwt = false
-
 [functions.send-otp]
 verify_jwt = false
 
