@@ -1,0 +1,15 @@
+name = "work-sync"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"
+
+# Pages Functions need SUPABASE_URL to validate user sessions before serving
+# files. Wrangler deploys clear plain_text vars set in the dashboard, so they
+# must live here. SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are Pages
+# secrets instead — the Cloudflare API preserves secret_text across deploys.
+[vars]
+SUPABASE_URL = "https://dhbeivfeuewzkdeqkjpa.supabase.co"
+
+# All Work-Sync file storage. Supabase Storage is not used anywhere.
+[[r2_buckets]]
+binding = "TASK_FILES"
+bucket_name = "work-sync-files"

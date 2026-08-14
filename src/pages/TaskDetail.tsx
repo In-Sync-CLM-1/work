@@ -123,7 +123,7 @@ export function TaskDetailPage() {
   };
 
   const handleDownload = async (filePath: string, fileName: string) => {
-    const url = await getDownloadUrl(filePath, { download: fileName });
+    const url = await getDownloadUrl(filePath);
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
