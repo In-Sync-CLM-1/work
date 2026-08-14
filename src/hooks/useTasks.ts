@@ -15,13 +15,22 @@ export function useTasks(filters: TaskFilters) {
       let query = supabase
         .from('tasks')
         .select(
-          '*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url), assigned_by_user:profiles!tasks_assigned_by_fkey(id,full_name,email,avatar_url)',
+          '*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url), assigned_by_user:profiles!tasks_assigned_by_fkey(id,full_name,email,avatar_url), department:task_departments(id,key,label), project:projects(id,project_number,project_name)',
           { count: 'exact' },
         );
 
       // Apply filters
       if (filters.status && filters.status !== 'all') {
         query = query.eq('status', filters.status);
+      }
+
+      if (filters.department_id) {
+        query = query.eq('department_id', filters.department_id);
+      }
+
+      // A 'mine' department list shows only what you were given or handed out.
+      if (filters.scope === 'mine' && user?.id) {
+        query = query.or(`assigned_to.eq.${user.id},assigned_by.eq.${user.id}`);
       }
 
       if (filters.priority && filters.priority !== 'all') {

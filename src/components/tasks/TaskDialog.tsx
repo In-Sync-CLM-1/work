@@ -1,7 +1,31 @@
 import { useState, useEffect } from 'react';
 import { X, Lock } from 'lucide-react';
-import type { Task, CreateTaskInput, UpdateTaskInput, TaskPriority, Profile } from '@/types/task';
+import type {
+  BriefFile,
+  Task,
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskPriority,
+  TaskRecurrence,
+  Profile,
+} from '@/types/task';
 import { canReassignTask } from '@/lib/taskUtils';
+import { useTaskDepartments } from '@/hooks/useTaskDepartments';
+import { useProjects } from '@/hooks/useProjects';
+import { ProjectPicker } from './ProjectPicker';
+import { BriefFilesField } from './BriefFilesField';
+
+const RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
+  daily: 'Daily',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+};
+
+const NEXT_DUE_TEXT: Record<TaskRecurrence, string> = {
+  daily: '1 day',
+  weekly: '1 week',
+  monthly: '1 month',
+};
 
 interface TaskDialogProps {
   open: boolean;
@@ -12,6 +36,8 @@ interface TaskDialogProps {
   isAdmin: boolean;
   onSubmit: (data: CreateTaskInput | UpdateTaskInput) => void;
   isSubmitting: boolean;
+  /** Pre-selects the department when creating from a department's own page. */
+  defaultDepartmentId?: string | null;
 }
 
 export function TaskDialog({
@@ -23,9 +49,12 @@ export function TaskDialog({
   isAdmin,
   onSubmit,
   isSubmitting,
+  defaultDepartmentId,
 }: TaskDialogProps) {
   const isEditing = !!task;
   const canReassign = task ? canReassignTask(currentUserId, task.assigned_by, isAdmin) : true;
+  const { departments, hasDepartments } = useTaskDepartments();
+  const { projects } = useProjects();
 
   const [formData, setFormData] = useState({
     task_name: '',
@@ -36,6 +65,11 @@ export function TaskDialog({
     priority: 'medium' as TaskPriority,
     tags: '',
     estimated_hours: '',
+    department_id: '' as string,
+    subcategory: '' as string,
+    project_id: null as string | null,
+    recurrence: '' as '' | TaskRecurrence,
+    brief_files: [] as BriefFile[],
   });
 
   useEffect(() => {
@@ -49,6 +83,11 @@ export function TaskDialog({
         priority: task.priority,
         tags: (task.tags || []).join(', '),
         estimated_hours: task.estimated_hours?.toString() || '',
+        department_id: task.department_id || '',
+        subcategory: task.subcategory || '',
+        project_id: task.project_id || null,
+        recurrence: task.recurrence || '',
+        brief_files: task.brief_files || [],
       });
     } else {
       setFormData({
@@ -60,9 +99,17 @@ export function TaskDialog({
         priority: 'medium',
         tags: '',
         estimated_hours: '',
+        department_id: defaultDepartmentId || '',
+        subcategory: '',
+        project_id: null,
+        recurrence: '',
+        brief_files: [],
       });
     }
-  }, [task, open]);
+  }, [task, open, defaultDepartmentId]);
+
+  const selectedDepartment = departments.find((d) => d.id === formData.department_id);
+  const subcategoryOptions = selectedDepartment?.subcategories ?? [];
 
   if (!open) return null;
 
@@ -87,6 +134,11 @@ export function TaskDialog({
       ...(isEditing && {
         estimated_hours: formData.estimated_hours ? Number(formData.estimated_hours) : undefined,
       }),
+      department_id: formData.department_id || null,
+      subcategory: formData.subcategory || null,
+      project_id: formData.project_id,
+      recurrence: formData.recurrence || null,
+      brief_files: formData.brief_files,
     };
 
     onSubmit(data);
@@ -118,6 +170,61 @@ export function TaskDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Department / Project / Sub-category — only where departments are configured */}
+          {hasDepartments && (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    Department <span className="text-destructive">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formData.department_id}
+                    onChange={(e) =>
+                      // Sub-categories belong to a department, so a change clears it.
+                      setFormData((p) => ({ ...p, department_id: e.target.value, subcategory: '' }))
+                    }
+                    className={inputCls}
+                  >
+                    <option value="">Select department</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Project</label>
+                  <ProjectPicker
+                    value={formData.project_id}
+                    onChange={(project_id) => setFormData((p) => ({ ...p, project_id }))}
+                    projects={projects}
+                  />
+                </div>
+              </div>
+
+              {subcategoryOptions.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium">Subcategory</label>
+                  <select
+                    value={formData.subcategory}
+                    onChange={(e) => set('subcategory', e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">No subcategory</option>
+                    {subcategoryOptions.map((s) => (
+                      <option key={s.id} value={s.label}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Task Name */}
           <div>
             <label className="text-sm font-medium">
@@ -213,6 +320,35 @@ export function TaskDialog({
               />
             </div>
           )}
+
+          {/* Repeat */}
+          <div>
+            <label className="text-sm font-medium">Repeat</label>
+            <select
+              value={formData.recurrence}
+              onChange={(e) => set('recurrence', e.target.value)}
+              className={inputCls}
+            >
+              <option value="">Does not repeat</option>
+              {(Object.keys(RECURRENCE_LABELS) as TaskRecurrence[]).map((r) => (
+                <option key={r} value={r}>
+                  {RECURRENCE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+            {formData.recurrence && (
+              <p className="text-xs text-muted-foreground mt-1">
+                A new copy of this task will be created, due{' '}
+                {NEXT_DUE_TEXT[formData.recurrence]} later, each time it is signed off.
+              </p>
+            )}
+          </div>
+
+          {/* Brief */}
+          <BriefFilesField
+            value={formData.brief_files}
+            onChange={(brief_files) => setFormData((p) => ({ ...p, brief_files }))}
+          />
 
           {/* Priority */}
           <div>

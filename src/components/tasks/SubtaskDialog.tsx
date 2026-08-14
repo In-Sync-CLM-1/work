@@ -42,6 +42,11 @@ export function SubtaskDialog({
       priority: formData.priority,
       parent_task_id: parentTask.id,
       estimated_hours: formData.estimated_hours ? Number(formData.estimated_hours) : undefined,
+      // Department, sub-category and project are already settled by the parent
+      // task, so the form doesn't ask again — it carries them through silently.
+      department_id: parentTask.department_id,
+      subcategory: parentTask.subcategory,
+      project_id: parentTask.project_id,
     });
   };
 

@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
+import { CreateTaskFAB } from '@/components/tasks/CreateTaskFAB';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -365,6 +366,9 @@ export function Layout({ children }: LayoutProps) {
         </div>
         {children}
       </main>
+
+      {/* Create a task from anywhere in the app */}
+      <CreateTaskFAB />
     </div>
   );
 }
