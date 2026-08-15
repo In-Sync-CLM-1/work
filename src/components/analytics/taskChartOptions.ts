@@ -88,13 +88,19 @@ export function priorityDonutOption(
         type: 'pie',
         radius: ['48%', '72%'],
         avoidLabelOverlap: true,
+        minAngle: 2,
         itemStyle: { borderColor: v.surface, borderWidth: 2 },
+        // Slivers get no label — their leader lines cross each other and
+        // collide with the neighbouring slice's text. The tooltip and the
+        // legend still name them.
         label: {
           show: true,
-          formatter: (p: { name: string; value: number }) => `${p.name}\n${p.value}`,
+          formatter: (p: { name: string; value: number; percent: number }) =>
+            p.percent >= 4 ? `${p.name}\n${p.value}` : '',
           fontSize: 11,
           color: v.inkSecondary,
         },
+        labelLine: { show: true, length: 8, length2: 8 },
         data: data.map((d) => ({
           name: PRIORITY_LABELS[d.priority],
           value: d.count,
@@ -279,7 +285,11 @@ export function overdueAgingOption(
 
 /** Workload: stacked status counts per person. */
 export function assigneeWorkloadOption(v: VizTokens, rows: AssigneeRow[]): EChartsCoreOption {
-  const display = rows.slice().reverse();
+  // Someone whose only tasks in this period were cancelled would otherwise
+  // occupy a labelled row with no bar against it.
+  const display = rows
+    .filter((r) => r.done + r.awaitingSignoff + r.inProgress + r.pending > 0)
+    .reverse();
   const stackStyle = { borderColor: v.surface, borderWidth: 2 };
   return {
     textStyle: chartText(v),
