@@ -42,11 +42,14 @@ export function CreateTaskFAB() {
 
   return (
     <>
+      {/* Sits a widget's height above the bottom-right corner: the In-Sync help
+          widget is fixed there at z-index 99999 and would otherwise cover this
+          button completely — invisible and unclickable. Same offset RMPL uses. */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Create new task"
         title="Create task"
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+        className="fixed bottom-24 right-6 z-40 h-14 w-14 flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-transform hover:scale-105"
       >
         <Plus className="h-6 w-6" />
       </button>
