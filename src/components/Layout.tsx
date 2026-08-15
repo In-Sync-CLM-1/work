@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
+import { useOpenTaskCounts } from '@/hooks/useOpenTaskCounts';
 import { orgLogoSrc } from '@/lib/orgLogo';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
 import { CreateTaskFAB } from '@/components/tasks/CreateTaskFAB';
@@ -38,6 +39,11 @@ export function Layout({ children }: LayoutProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { departments, hasDepartments } = useTaskDepartments();
   const orgLogoImg = isPlatformAdmin ? null : orgLogoSrc(orgLogo);
+  const openCounts = useOpenTaskCounts();
+
+  // '/tasks/d/digicom' -> 'digicom'; the combined '/tasks' list has no key.
+  const deptKeyFor = (to: string) =>
+    to.startsWith('/tasks/d/') ? to.slice('/tasks/d/'.length) : null;
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -133,6 +139,18 @@ export function Layout({ children }: LayoutProps) {
                   {taskSubItems.map((sub) => {
                     const isActive = isCurrentList && currentStatus === sub.status;
                     const href = sub.status === 'all' ? item.to : `${item.to}?status=${sub.status}`;
+                    // Only the unfinished states carry a count — those are the
+                    // ones worth glancing at. A zero is left blank rather than
+                    // shown, so a badge always means there is something to do.
+                    const counts = deptKeyFor(item.to)
+                      ? openCounts.byDepartmentKey[deptKeyFor(item.to)!]
+                      : openCounts.total;
+                    const n =
+                      sub.status === 'pending'
+                        ? counts?.pending
+                        : sub.status === 'in_progress'
+                          ? counts?.in_progress
+                          : undefined;
                     return (
                       <Link
                         key={sub.status}
@@ -145,7 +163,12 @@ export function Layout({ children }: LayoutProps) {
                         )}
                       >
                         <span className={cn('h-1.5 w-1.5 rounded-full flex-shrink-0', sub.color)} />
-                        {sub.label}
+                        <span className="truncate">{sub.label}</span>
+                        {!!n && (
+                          <span className="ml-auto shrink-0 tabular-nums rounded-full bg-sidebar-accent px-1.5 py-0.5 text-[10px] font-semibold text-sidebar-strong">
+                            {n}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
