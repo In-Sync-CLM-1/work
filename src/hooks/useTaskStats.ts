@@ -1,8 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import type { TaskStats, AIInsight, UserCompletionStat } from '@/types/task';
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/lib/auth-context';
 import { startOfWeek, endOfWeek, subWeeks, format, eachWeekOfInterval } from 'date-fns';
+
+/** The slice of a task the dashboard aggregates over. */
+interface TaskStatsRow {
+  id: string;
+  status: string;
+  priority: string;
+  assigned_to: string;
+  assigned_by: string;
+  due_date: string;
+  created_at: string;
+  completed_at: string | null;
+  closed_at: string | null;
+  assigned_user?: { full_name: string | null } | null;
+}
 
 function computeAIInsights(
   totalTasks: number,
@@ -145,14 +160,17 @@ export function useTaskStats(startDate?: string, endDate?: string, isAdmin = tru
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
-      // Single query: fetch all tasks with assigned user profiles
-      const { data: allTasks, error } = await supabase
-        .from('tasks')
-        .select(
-          'id, status, priority, assigned_to, assigned_by, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
-        );
-
-      if (error) throw error;
+      // Paged, not a single query: PostgREST returns at most 1,000 rows, and
+      // an org with more tasks than that would get stats computed from a
+      // fraction of its work without any error to show for it.
+      const allTasks = await fetchAllRows<TaskStatsRow>(() =>
+        supabase
+          .from('tasks')
+          .select(
+            'id, status, priority, assigned_to, assigned_by, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
+          )
+          .order('created_at', { ascending: true }),
+      );
 
       // For non-admin users, restrict to tasks they are assigned to or created
       const effectiveUserId = userId || user.id;

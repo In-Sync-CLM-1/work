@@ -1,5 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
+
+interface OrgListRow {
+  id: string;
+  name: string;
+  plan: string;
+  trial_ends_at: string | null;
+  created_at: string;
+}
+
+interface OrgTaskRow {
+  id: string;
+  org_id: string | null;
+  status: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface PlatformOrgRow {
   id: string;
@@ -22,17 +40,22 @@ export function usePlatformOrgs() {
   return useQuery({
     queryKey: ['platform-orgs'],
     queryFn: async () => {
-      const [orgsRes, rolesRes, tasksRes, paymentsRes] = await Promise.all([
-        supabase.from('organizations').select('id, name, plan, trial_ends_at, created_at'),
-        supabase.from('user_roles').select('org_id, is_active').neq('role', 'platform_admin'),
-        supabase.from('tasks').select('id, org_id, status, due_date, created_at, updated_at'),
-        supabase.from('payments').select('org_id, amount'),
+      // Paged: these span every org, so they hit PostgREST's 1,000-row
+      // response cap before any single org's own list does.
+      const [orgs, roles, tasks, payments] = await Promise.all([
+        fetchAllRows<OrgListRow>(() =>
+          supabase.from('organizations').select('id, name, plan, trial_ends_at, created_at'),
+        ),
+        fetchAllRows<{ org_id: string | null; is_active: boolean | null }>(() =>
+          supabase.from('user_roles').select('org_id, is_active').neq('role', 'platform_admin'),
+        ),
+        fetchAllRows<OrgTaskRow>(() =>
+          supabase.from('tasks').select('id, org_id, status, due_date, created_at, updated_at'),
+        ),
+        fetchAllRows<{ org_id: string | null; amount: number }>(() =>
+          supabase.from('payments').select('org_id, amount'),
+        ),
       ]);
-
-      const orgs = orgsRes.data ?? [];
-      const roles = rolesRes.data ?? [];
-      const tasks = tasksRes.data ?? [];
-      const payments = paymentsRes.data ?? [];
 
       const now = new Date();
 
