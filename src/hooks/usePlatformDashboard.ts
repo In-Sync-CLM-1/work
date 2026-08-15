@@ -1,5 +1,38 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
+
+interface Org {
+  id: string;
+  name: string;
+  plan: string;
+  trial_ends_at: string | null;
+  created_at: string;
+}
+
+interface PlatformProfile {
+  id: string;
+  full_name: string | null;
+  org_id: string | null;
+  is_active: boolean | null;
+  created_at: string;
+}
+
+interface PlatformTask {
+  id: string;
+  org_id: string | null;
+  status: string;
+  due_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PlatformRole {
+  user_id: string;
+  org_id: string | null;
+  role: string;
+  is_active: boolean | null;
+}
 
 export interface OrgRow {
   id: string;
@@ -41,17 +74,23 @@ export function usePlatformDashboard() {
   return useQuery({
     queryKey: ['platform-dashboard'],
     queryFn: async () => {
-      const [orgsRes, profilesRes, tasksRes, rolesRes] = await Promise.all([
-        supabase.from('organizations').select('id, name, plan, trial_ends_at, created_at'),
-        supabase.from('profiles').select('id, full_name, org_id, is_active, created_at'),
-        supabase.from('tasks').select('id, org_id, status, due_date, created_at, updated_at'),
-        supabase.from('user_roles').select('user_id, org_id, role, is_active').neq('role', 'platform_admin'),
+      // Platform-wide rollups span every org, so they cross PostgREST's
+      // 1,000-row response cap sooner than any single org does. Paged, or the
+      // per-org task counts on this dashboard are simply wrong.
+      const [orgs, profiles, tasks, roles] = await Promise.all([
+        fetchAllRows<Org>(() =>
+          supabase.from('organizations').select('id, name, plan, trial_ends_at, created_at'),
+        ),
+        fetchAllRows<PlatformProfile>(() =>
+          supabase.from('profiles').select('id, full_name, org_id, is_active, created_at'),
+        ),
+        fetchAllRows<PlatformTask>(() =>
+          supabase.from('tasks').select('id, org_id, status, due_date, created_at, updated_at'),
+        ),
+        fetchAllRows<PlatformRole>(() =>
+          supabase.from('user_roles').select('user_id, org_id, role, is_active').neq('role', 'platform_admin'),
+        ),
       ]);
-
-      const orgs = orgsRes.data ?? [];
-      const profiles = profilesRes.data ?? [];
-      const tasks = tasksRes.data ?? [];
-      const roles = rolesRes.data ?? [];
 
       const now = new Date();
 

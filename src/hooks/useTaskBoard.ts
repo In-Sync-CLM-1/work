@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Task, TaskMilestone, TaskStatus } from '@/types/task';
 import { supabase } from '@/lib/supabase';
+import { fetchAllRows } from '@/lib/fetchAllRows';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/auth-context';
 
@@ -23,28 +24,35 @@ export function useTaskBoard(filters: BoardFilters = {}) {
     queryKey: ['task-board', filters],
     enabled: !!user,
     queryFn: async () => {
-      let query = supabase
-        .from('tasks')
-        .select('*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url)')
-        .order('due_date', { ascending: true })
-        .limit(500);
+      // Live work only. A flat 500-row cap quietly hid tasks once an org had
+      // more than that; carrying years of finished history made it worse. The
+      // Board and Timeline are for work in flight, so closed, cancelled and
+      // completed tasks are excluded rather than competing for the cap — the
+      // list view is where history is browsed.
+      const tasks = await fetchAllRows<Task>(() => {
+        let query = supabase
+          .from('tasks')
+          .select('*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url)')
+          .in('status', ['pending', 'in_progress'])
+          .order('due_date', { ascending: true });
 
-      if (filters.priority && filters.priority !== 'all') query = query.eq('priority', filters.priority);
-      if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
-      if (filters.search) {
-        query = query.or(`task_name.ilike.%${filters.search}%,task_number.ilike.%${filters.search}%`);
-      }
+        if (filters.priority && filters.priority !== 'all') query = query.eq('priority', filters.priority);
+        if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);
+        if (filters.search) {
+          query = query.or(`task_name.ilike.%${filters.search}%,task_number.ilike.%${filters.search}%`);
+        }
+        return query;
+      });
 
-      const { data: tasks, error } = await query;
-      if (error) throw new Error(error.message ?? 'Failed to fetch tasks');
-
-      const { data: ms } = await supabase.from('task_milestones').select('*');
+      const ms = await fetchAllRows<TaskMilestone>(() =>
+        supabase.from('task_milestones').select('*'),
+      );
       const milestonesByTask: Record<string, TaskMilestone[]> = {};
-      for (const m of (ms ?? []) as TaskMilestone[]) {
+      for (const m of ms) {
         (milestonesByTask[m.task_id] ??= []).push(m);
       }
 
-      return { tasks: (tasks ?? []) as Task[], milestonesByTask };
+      return { tasks, milestonesByTask };
     },
   });
 
