@@ -14,6 +14,87 @@
       gtag('config', 'AW-18110503768');
     </script>
 
+    <!--
+      Stale-shell self-heal.
+      After a deploy the app's JS filename changes. A device still holding the
+      previous cached index.html requests the old file, which no longer exists;
+      Cloudflare Pages then returns index.html (HTML) for it, the browser
+      refuses to run HTML as a script, and the user is left staring at a blank
+      screen or a "Failed to fetch" error. This inline guard runs regardless of
+      the app bundle: if the shell fails to boot (script load error, or #root
+      still empty after a grace period) it clears the stale service-worker
+      caches and reloads once, so nobody stays stuck on an old build. Runs at
+      most once per tab session to avoid a reload loop.
+    -->
+    <script>
+      (function () {
+        var KEY = 'worksync_shell_recovered';
+        var recovering = false;
+        function recover() {
+          if (recovering) return;
+          recovering = true;
+          try {
+            if (sessionStorage.getItem(KEY)) return; // already tried this session
+            sessionStorage.setItem(KEY, '1');
+          } catch (e) {}
+          var reload = function () { location.reload(); };
+          var jobs = [];
+          try {
+            if ('serviceWorker' in navigator) {
+              jobs.push(
+                navigator.serviceWorker.getRegistrations().then(function (rs) {
+                  return Promise.all(rs.map(function (r) { return r.unregister(); }));
+                })
+              );
+            }
+            if (window.caches && caches.keys) {
+              jobs.push(
+                caches.keys().then(function (ks) {
+                  return Promise.all(ks.map(function (k) { return caches.delete(k); }));
+                })
+              );
+            }
+          } catch (e) {}
+          Promise.all(jobs).then(reload).catch(reload);
+          setTimeout(reload, 3000); // hard fallback if the cleanup hangs
+        }
+        // Fast path: the app's module script failed to load/parse (stale hash).
+        window.addEventListener(
+          'error',
+          function (e) {
+            var t = e && e.target;
+            if (t && t.tagName === 'SCRIPT' && t.src) recover();
+          },
+          true
+        );
+        // Backstop: allow a generous window for slow networks, then check that
+        // React actually mounted. If #root is still empty, treat it as blank.
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            var root = document.getElementById('root');
+            if (!root || root.childElementCount === 0) {
+              recover();
+            } else {
+              try { sessionStorage.removeItem(KEY); } catch (e) {}
+            }
+          }, 12000);
+        });
+        // A tab left open across a deploy should pick the new build up on its
+        // own rather than waiting for the user to hit an error.
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('controllerchange', function () {
+            if (!window.__worksyncReloading) {
+              window.__worksyncReloading = true;
+              location.reload();
+            }
+          });
+          navigator.serviceWorker.ready.then(function (reg) {
+            setInterval(function () { reg.update(); }, 60000);
+          }).catch(function () {});
+        }
+      })();
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#6d28d9" />
