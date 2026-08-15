@@ -253,60 +253,37 @@ export function TaskDialog({
             />
           </div>
 
-          {/* Assign To */}
-          <div>
-            <label className="text-sm font-medium">
-              Assign To <span className="text-destructive">*</span>
-            </label>
-            {isEditing && !canReassign ? (
-              <div className="mt-1 flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                <span>{task?.assigned_user?.full_name || 'Unknown'}</span>
-                <span className="text-xs ml-auto">Only the task creator can reassign</span>
-              </div>
-            ) : (
-              <select
-                required
-                value={formData.assigned_to}
-                onChange={(e) => set('assigned_to', e.target.value)}
-                className={inputCls}
-              >
-                <option value="">Select team member</option>
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Due Date (and Start Date in edit mode) */}
-          {isEditing ? (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">
-                  Due Date <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="date"
+          {/* Assign To + Due Date share a row, as they do in RMPL. When the
+              assignee is locked the notice needs the full width, so that case
+              drops back to stacked fields. */}
+          <div className={isEditing && !canReassign ? 'space-y-4' : 'grid grid-cols-2 gap-4'}>
+            <div>
+              <label className="text-sm font-medium">
+                Assign To <span className="text-destructive">*</span>
+              </label>
+              {isEditing && !canReassign ? (
+                <div className="mt-1 flex items-center gap-2 px-3 py-2 text-sm rounded-md border border-input bg-muted text-muted-foreground">
+                  <Lock className="h-4 w-4" />
+                  <span>{task?.assigned_user?.full_name || 'Unknown'}</span>
+                  <span className="text-xs ml-auto">Only the task creator can reassign</span>
+                </div>
+              ) : (
+                <select
                   required
-                  value={formData.due_date}
-                  onChange={(e) => set('due_date', e.target.value)}
+                  value={formData.assigned_to}
+                  onChange={(e) => set('assigned_to', e.target.value)}
                   className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Start Date</label>
-                <input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => set('start_date', e.target.value)}
-                  className={inputCls}
-                />
-              </div>
+                >
+                  <option value="">Select team member</option>
+                  {profiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.full_name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
-          ) : (
+
             <div>
               <label className="text-sm font-medium">
                 Due Date <span className="text-destructive">*</span>
@@ -316,6 +293,19 @@ export function TaskDialog({
                 required
                 value={formData.due_date}
                 onChange={(e) => set('due_date', e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+
+          {/* Start date only exists once the task is under way. */}
+          {isEditing && (
+            <div>
+              <label className="text-sm font-medium">Start Date</label>
+              <input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => set('start_date', e.target.value)}
                 className={inputCls}
               />
             </div>
