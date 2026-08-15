@@ -12,6 +12,7 @@ import { AuthPage } from '@/pages/Auth';
 import { LandingPage } from '@/pages/Landing';
 import { OnboardingPage } from '@/pages/Onboarding';
 import { UserManagementPage } from '@/pages/UserManagement';
+import { OrgSettingsPage } from '@/pages/OrgSettings';
 import { BillingPage } from '@/pages/Billing';
 import { ProfilePage } from '@/pages/Profile';
 import { PlatformOrganisations } from '@/pages/PlatformOrganisations';
@@ -104,6 +105,7 @@ function AppRoutes() {
       {/* Admin routes (org-level) */}
       <Route path="/billing" element={<ProtectedRoute requiredAdmin><BillingPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute requiredAdmin><UserManagementPage /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute requiredAdmin requireOrg><OrgSettingsPage /></ProtectedRoute>} />
 
       {/* Platform admin routes */}
       <Route path="/platform/organisations" element={<ProtectedRoute requirePlatformAdmin><PlatformOrganisations /></ProtectedRoute>} />
