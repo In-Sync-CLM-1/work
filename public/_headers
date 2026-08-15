@@ -1,0 +1,14 @@
+# Cloudflare Pages headers.
+# Content-hashed build assets never change for a given filename, so cache them
+# hard for performance. The HTML shell decides "which version am I on", so it
+# must always be revalidated, or a device keeps booting an old build whose JS
+# filenames no longer exist on the server.
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/index.html
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
