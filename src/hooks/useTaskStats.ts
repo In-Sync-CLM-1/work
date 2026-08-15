@@ -5,6 +5,14 @@ import { fetchAllRows } from '@/lib/fetchAllRows';
 import { useAuth } from '@/lib/auth-context';
 import { startOfWeek, endOfWeek, subWeeks, format, eachWeekOfInterval } from 'date-fns';
 
+/**
+ * When a task actually finished. Sign-off is the finish line, so prefer
+ * closed_at; fall back to completed_at for rows carried over from a system
+ * that had no sign-off step.
+ */
+const finishedAt = (t: { closed_at: string | null; completed_at: string | null }) =>
+  t.closed_at || t.completed_at;
+
 /** The slice of a task the dashboard aggregates over. */
 interface TaskStatsRow {
   id: string;
@@ -210,16 +218,17 @@ export function useTaskStats(startDate?: string, endDate?: string, isAdmin = tru
           ['pending', 'in_progress'].includes(t.status),
       ).length;
 
-      // Completed this week (always current week, full dataset)
+      // Signed off this week (always current week, full dataset).
+      // Sign-off is the finish line: 'completed' means the doer is done but
+      // the assigner has not accepted it yet, so counting only 'completed'
+      // reported almost nothing once work started being signed off properly.
       const weekNowStart = startOfWeek(now, { weekStartsOn: 1 });
       const weekNowEnd = endOfWeek(now, { weekStartsOn: 1 });
-      const completedThisWeek = rawTasks.filter(
-        (t) =>
-          t.status === 'completed' &&
-          t.completed_at &&
-          new Date(t.completed_at) >= weekNowStart &&
-          new Date(t.completed_at) <= weekNowEnd,
-      ).length;
+      const completedThisWeek = rawTasks.filter((t) => {
+        if (t.status !== 'closed') return false;
+        const at = finishedAt(t);
+        return at && new Date(at) >= weekNowStart && new Date(at) <= weekNowEnd;
+      }).length;
 
       const totalTasks = tasks.length;
 
@@ -264,8 +273,10 @@ export function useTaskStats(startDate?: string, endDate?: string, isAdmin = tru
           return c >= ws && c <= we;
         }).length;
         const completed = rawTasks.filter((t) => {
-          if (t.status !== 'completed' || !t.completed_at) return false;
-          const c = new Date(t.completed_at);
+          if (t.status !== 'closed') return false;
+          const at = finishedAt(t);
+          if (!at) return false;
+          const c = new Date(at);
           return c >= ws && c <= we;
         }).length;
         return { week: label, created, completed };
@@ -305,20 +316,17 @@ export function useTaskStats(startDate?: string, endDate?: string, isAdmin = tru
 
         if (task.status === 'completed' || task.status === 'closed') {
           stat.completed++;
-          if (task.completed_at && task.due_date) {
-            const completedDate = new Date(task.completed_at);
+          const at = finishedAt(task);
+          if (at && task.due_date) {
             const dueDate = new Date(task.due_date + 'T23:59:59');
-            if (completedDate <= dueDate) {
+            if (new Date(at) <= dueDate) {
               stat.onTime++;
             }
           }
-          if (task.completed_at) {
+          if (at) {
             const days = Math.max(
               0,
-              Math.round(
-                (new Date(task.completed_at).getTime() - new Date(task.created_at).getTime()) /
-                  86400000,
-              ),
+              Math.round((new Date(at).getTime() - new Date(task.created_at).getTime()) / 86400000),
             );
             completionDaysMap.get(userId)!.push(days);
           }

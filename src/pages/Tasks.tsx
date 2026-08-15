@@ -325,7 +325,7 @@ export function TasksPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground flex items-center gap-2">
                   <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                  Completed This Week
+                  Signed off this week
                 </span>
                 <span className="font-bold text-lg text-green-600">{stats?.completedThisWeek ?? 0}</span>
               </div>
