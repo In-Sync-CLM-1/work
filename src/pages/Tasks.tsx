@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, BarChart3, AlertTriangle, Clock, CheckCircle, List, Columns3, GanttChartSquare } from 'lucide-react';
 import type { Task, TaskStatus, TaskFilters as TaskFiltersType, CreateTaskInput, UpdateTaskInput } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
 import { useTasks } from '@/hooks/useTasks';
+import { useTaskDepartments } from '@/hooks/useTaskDepartments';
+import { useStickyState } from '@/hooks/useStickyState';
 import { useTaskBoard } from '@/hooks/useTaskBoard';
 import { TaskBoard } from '@/components/tasks/TaskBoard';
 import { TaskTimeline } from '@/components/tasks/TaskTimeline';
@@ -27,11 +29,23 @@ export function TasksPage() {
   const { user, isAdmin } = useAuth();
   const currentUserId = user?.id || '';
 
+  // /tasks/d/:key renders this same page scoped to one department.
+  const { key: departmentKey } = useParams<{ key: string }>();
+  const { byKey, isLoading: departmentsLoading } = useTaskDepartments();
+  const department = departmentKey ? byKey(departmentKey) : undefined;
+
+  // Filters persist per list, so returning to a department shows it as you left it.
+  const stickyKey = `worksync.tasks.${departmentKey ?? 'all'}`;
+  const [sticky, setSticky] = useStickyState<Pick<TaskFiltersType, 'status' | 'priority' | 'items_per_page' | 'page'>>(
+    stickyKey,
+    { status: 'all', priority: 'all', items_per_page: 10, page: 1 },
+  );
+
   const [filters, setFilters] = useState<TaskFiltersType>({
-    status: (searchParams.get('status') as TaskFiltersType['status']) || 'all',
-    priority: 'all',
-    page: 1,
-    items_per_page: 10,
+    status: (searchParams.get('status') as TaskFiltersType['status']) || sticky.status || 'all',
+    priority: sticky.priority || 'all',
+    page: sticky.page || 1,
+    items_per_page: sticky.items_per_page || 10,
   });
 
   // Sync filters when URL status param changes (e.g. sidebar click)
@@ -39,6 +53,21 @@ export function TasksPage() {
     const urlStatus = (searchParams.get('status') as TaskFiltersType['status']) || 'all';
     setFilters((prev) => ({ ...prev, status: urlStatus, page: 1 }));
   }, [searchParams]);
+
+  // Re-scope when moving between department lists.
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      department_id: department?.id,
+      scope: department?.visibility,
+      status: sticky.status || 'all',
+      priority: sticky.priority || 'all',
+      items_per_page: sticky.items_per_page || 10,
+      page: sticky.page || 1,
+    }));
+    // Only re-run when the list itself changes, not on every sticky write.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [department?.id, department?.visibility]);
 
   const view = (searchParams.get('view') as 'list' | 'board' | 'timeline') || 'list';
   const setView = (v: 'list' | 'board' | 'timeline') => {
@@ -66,7 +95,16 @@ export function TasksPage() {
   const totalPages = Math.ceil((totalCount || 0) / filters.items_per_page);
 
   const handleFiltersChange = (changes: Partial<TaskFiltersType>) => {
-    setFilters((prev) => ({ ...prev, ...changes }));
+    setFilters((prev) => {
+      const next = { ...prev, ...changes };
+      setSticky({
+        status: next.status,
+        priority: next.priority,
+        items_per_page: next.items_per_page,
+        page: next.page,
+      });
+      return next;
+    });
     if ('status' in changes) {
       const s = changes.status;
       setSearchParams(s && s !== 'all' ? { status: s } : {}, { replace: true });
@@ -149,13 +187,32 @@ export function TasksPage() {
     }
   };
 
+  // A department list whose department no longer exists (renamed, deactivated,
+  // or a stale bookmark) should say so rather than silently show everything.
+  if (departmentKey && !departmentsLoading && !department) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-muted-foreground mb-2">That department no longer exists.</p>
+        <button onClick={() => navigate('/tasks')} className="text-sm text-primary hover:underline">
+          Go to all tasks
+        </button>
+      </div>
+    );
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Tasks</h1>
-          <p className="text-sm text-muted-foreground">{totalCount || 0} total tasks</p>
+          <h1 className="text-2xl font-bold">{department ? `${department.label} Tasks` : 'Tasks'}</h1>
+          <p className="text-sm text-muted-foreground">
+            {department?.visibility === 'mine'
+              ? `${totalCount || 0} tasks assigned to or by you`
+              : department
+                ? `${totalCount || 0} tasks across ${department.label}`
+                : `${totalCount || 0} total tasks`}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <ViewSwitcher view={view} onChange={setView} />
@@ -319,6 +376,7 @@ export function TasksPage() {
         isAdmin={isAdmin}
         onSubmit={handleCreateTask}
         isSubmitting={isSubmitting}
+        defaultDepartmentId={department?.id ?? null}
       />
 
       {subtaskParent && (
