@@ -36,6 +36,11 @@ interface AuthContextType {
   // Roles & permissions
   userRole: AppRole | null;
   isPlatformAdmin: boolean;
+  /** Has the platform_admin role, whether or not they are inside an org now. */
+  canUsePlatformConsole: boolean;
+  /** Every organisation this person belongs to. */
+  memberships: Organization[];
+  switchOrg: (orgId: string) => Promise<void>;
   isAdmin: boolean;
   isManager: boolean;
 
@@ -58,6 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [memberships, setMemberships] = useState<Organization[]>([]);
+  const [canUsePlatformConsole, setCanUsePlatformConsole] = useState(false);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -88,35 +95,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(profileRes.data);
 
-      // Fetch role
-      const roleRes = await supabase
+      // Every membership, not just the first row. Someone can belong to more
+      // than one organisation — and a platform admin who also works inside an
+      // organisation should be treated as a member of the one they are in,
+      // otherwise they get the platform console when they wanted a workspace.
+      const rolesRes = await supabase
         .from('user_roles')
-        .select('role')
+        .select('role, org_id')
         .eq('user_id', currentUser.id)
         .eq('is_active', true)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
 
-      const role = (roleRes.data?.role as AppRole) ?? null;
-      setUserRole(role);
+      const roleRows = (rolesRes.data ?? []) as { role: AppRole; org_id: string | null }[];
+      const orgId = profileRes.data.org_id as string | null;
 
-      // Platform admin: skip org/designation fetching (they have no org)
-      if (role === 'platform_admin') {
+      // The role that applies is the one for the organisation being worked in.
+      // Platform admin is the fallback for having no organisation at all.
+      const activeRole =
+        roleRows.find((r) => orgId && r.org_id === orgId)?.role ??
+        roleRows.find((r) => r.role === 'platform_admin')?.role ??
+        roleRows[0]?.role ??
+        null;
+
+      setUserRole(activeRole);
+      setCanUsePlatformConsole(roleRows.some((r) => r.role === 'platform_admin'));
+
+      const orgIds = roleRows.map((r) => r.org_id).filter((id): id is string => !!id);
+      if (orgIds.length > 0) {
+        const orgsRes = await supabase
+          .from('organizations')
+          .select('id, name, logo_url, plan, trial_ends_at')
+          .in('id', orgIds)
+          .order('name');
+        setMemberships(orgsRes.data ?? []);
+      } else {
+        setMemberships([]);
+      }
+
+      if (!orgId) {
         setOrganization(null);
         return;
       }
 
-      // Org user: fetch org context
-      const orgId = profileRes.data.org_id;
-
-      const orgRes = orgId
-        ? await supabase
-            .from('organizations')
-            .select('id, name, logo_url, plan, trial_ends_at')
-            .eq('id', orgId)
-            .single()
-        : { data: null, error: null };
+      const orgRes = await supabase
+        .from('organizations')
+        .select('id, name, logo_url, plan, trial_ends_at')
+        .eq('id', orgId)
+        .single();
 
       if (orgRes.data) {
         setOrganization(orgRes.data);
@@ -244,7 +269,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setOrganization(null);
+    setMemberships([]);
+    setCanUsePlatformConsole(false);
     setUserRole(null);
+  };
+
+  /**
+   * Move to another organisation you belong to. The database function refuses
+   * any organisation you are not a member of — the app never writes org_id
+   * directly, because that column is what every access check reads.
+   */
+  const switchOrg = async (orgId: string) => {
+    const { error } = await supabase.rpc('set_active_org', { p_org_id: orgId });
+    if (error) throw error;
+    await refreshAuth();
   };
 
   const isPlatformAdmin = userRole === 'platform_admin';
@@ -272,6 +310,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isTrialExpired,
     userRole,
     isPlatformAdmin,
+    canUsePlatformConsole,
+    memberships,
+    switchOrg,
     isAdmin,
     isManager,
     isLoading,

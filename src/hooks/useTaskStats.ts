@@ -161,24 +161,26 @@ function computeAIInsights(
 }
 
 export function useTaskStats(startDate?: string, endDate?: string, isAdmin = true, userId = '') {
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data: stats, isLoading } = useQuery<TaskStats>({
-    queryKey: ['task-stats', user?.id, startDate, endDate, isAdmin],
+    queryKey: ['task-stats', user?.id, startDate, endDate, isAdmin, orgId],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
 
       // Paged, not a single query: PostgREST returns at most 1,000 rows, and
       // an org with more tasks than that would get stats computed from a
       // fraction of its work without any error to show for it.
-      const allTasks = await fetchAllRows<TaskStatsRow>(() =>
-        supabase
+      const allTasks = await fetchAllRows<TaskStatsRow>(() => {
+        const q = supabase
           .from('tasks')
           .select(
             'id, status, priority, assigned_to, assigned_by, due_date, created_at, completed_at, closed_at, assigned_user:profiles!tasks_assigned_to_fkey(full_name)',
           )
-          .order('created_at', { ascending: true }),
-      );
+          .order('created_at', { ascending: true });
+        // Scope to the organisation being worked in — see useTasks.
+        return orgId ? q.eq('org_id', orgId) : q;
+      });
 
       // For non-admin users, restrict to tasks they are assigned to or created
       const effectiveUserId = userId || user.id;

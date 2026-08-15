@@ -18,15 +18,20 @@ export function useTaskDepartments() {
     enabled: !!user && !!orgId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      // Scoped explicitly to the organisation being worked in — a platform
+      // admin can read every organisation's departments, and merging them
+      // would put another tenant's teams in this sidebar.
       const [deptRes, subRes] = await Promise.all([
         supabase
           .from('task_departments')
           .select('*')
+          .eq('org_id', orgId!)
           .eq('is_active', true)
           .order('sort_order'),
         supabase
           .from('task_subcategories')
           .select('*')
+          .eq('org_id', orgId!)
           .eq('is_active', true)
           .order('sort_order'),
       ]);

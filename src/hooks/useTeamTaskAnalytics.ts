@@ -130,12 +130,14 @@ export function useTeamTaskAnalytics(
     queryFn: async () => {
       const [rows, milestones] = await Promise.all([
         fetchAllRows<TaskRow>(() => {
-          const q = supabase
+          let q = supabase
             .from('tasks')
             .select(
               'id, task_name, status, priority, subcategory, department_id, assigned_to, due_date, created_at, completed_at, closed_at, restart_reason, assigned_user:profiles!tasks_assigned_to_fkey(full_name, email)',
             )
             .order('created_at', { ascending: true });
+          // Scope to the organisation being worked in — see useTasks.
+          if (orgId) q = q.eq('org_id', orgId);
           return departmentId ? q.eq('department_id', departmentId) : q;
         }),
         fetchAllRows<MilestoneRow>(() =>

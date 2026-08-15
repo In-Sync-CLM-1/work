@@ -37,12 +37,14 @@ export function useOpenTaskCounts() {
     enabled: !!user && !!orgId,
     staleTime: 30_000,
     queryFn: async () =>
-      fetchAllRows<OpenRow>(() =>
-        supabase
+      fetchAllRows<OpenRow>(() => {
+        const q = supabase
           .from('tasks')
           .select('department_id, status, assigned_to, assigned_by')
-          .in('status', ['pending', 'in_progress']),
-      ),
+          .in('status', ['pending', 'in_progress']);
+        // Scope to the organisation being worked in — see useTasks.
+        return orgId ? q.eq('org_id', orgId) : q;
+      }),
   });
 
   const tally = (subset: OpenRow[]): OpenCounts => ({

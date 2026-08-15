@@ -77,7 +77,12 @@ function ProtectedRoute({
 
 /** Smart dashboard: platform admin sees platform overview, org users see task dashboard */
 function SmartDashboard() {
-  const { isPlatformAdmin } = useAuth();
+  const { isPlatformAdmin, organization } = useAuth();
+  // Someone inside an organisation gets that workspace, even if they also hold
+  // the platform role — arriving from another app should land you where you
+  // came to work, not on the platform console. The console stays reachable
+  // from the organisation switcher.
+  if (organization) return <DashboardPage />;
   return isPlatformAdmin ? <PlatformDashboard /> : <DashboardPage />;
 }
 

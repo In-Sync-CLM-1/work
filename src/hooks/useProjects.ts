@@ -15,9 +15,11 @@ export function useProjects() {
     enabled: !!user && !!orgId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
+      // Scoped explicitly — see useTaskDepartments.
       const { data, error } = await supabase
         .from('projects')
         .select('id, org_id, project_number, project_name, status')
+        .eq('org_id', orgId!)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
