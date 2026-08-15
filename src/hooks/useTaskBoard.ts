@@ -18,10 +18,10 @@ export interface BoardFilters {
  */
 export function useTaskBoard(filters: BoardFilters = {}) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, orgId } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['task-board', filters],
+    queryKey: ['task-board', filters, orgId],
     enabled: !!user,
     queryFn: async () => {
       // Live work only. A flat 500-row cap quietly hid tasks once an org had
@@ -35,6 +35,9 @@ export function useTaskBoard(filters: BoardFilters = {}) {
           .select('*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url)')
           .in('status', ['pending', 'in_progress'])
           .order('due_date', { ascending: true });
+
+        // Scope to the organisation being worked in — see useTasks.
+        if (orgId) query = query.eq('org_id', orgId);
 
         if (filters.priority && filters.priority !== 'all') query = query.eq('priority', filters.priority);
         if (filters.assigned_to) query = query.eq('assigned_to', filters.assigned_to);

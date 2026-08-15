@@ -9,7 +9,7 @@ export function useTasks(filters: TaskFilters) {
   const { user, orgId } = useAuth();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['tasks', filters],
+    queryKey: ['tasks', filters, orgId],
     enabled: !!user,
     queryFn: async () => {
       let query = supabase
@@ -18,6 +18,12 @@ export function useTasks(filters: TaskFilters) {
           '*, assigned_user:profiles!tasks_assigned_to_fkey(id,full_name,email,avatar_url), assigned_by_user:profiles!tasks_assigned_by_fkey(id,full_name,email,avatar_url), department:task_departments(id,key,label), project:projects(id,project_number,project_name)',
           { count: 'exact' },
         );
+
+      // Scope to the organisation being worked in. Access control already
+      // stops an ordinary member seeing anything else, but a platform admin
+      // can read every organisation — without this they would get every
+      // tenant's tasks merged into one list.
+      if (orgId) query = query.eq('org_id', orgId);
 
       // Apply filters
       if (filters.status && filters.status !== 'all') {

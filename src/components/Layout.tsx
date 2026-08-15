@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, ListTodo, LogOut, User, Users, Settings, Menu, X, Wallet, Clock, AlertTriangle,
+  LayoutDashboard, ListTodo, LogOut, User, Users, Menu, X, Wallet, Clock, AlertTriangle,
   MessageCircle, Mail, MapPin, ShieldCheck, Calendar, Headphones, UserCheck, Receipt, ExternalLink,
   Sparkles, Building, Sun, Moon,
 } from 'lucide-react';
@@ -10,7 +10,7 @@ import { useTheme } from '@/lib/theme-context';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
 import { useOpenTaskCounts } from '@/hooks/useOpenTaskCounts';
-import { orgLogoSrc } from '@/lib/orgLogo';
+import { OrgSwitcher } from '@/components/OrgSwitcher';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
 import { CreateTaskFAB } from '@/components/tasks/CreateTaskFAB';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,11 +34,10 @@ const platformLinks = [
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, profile, isAdmin, userRole, orgName, orgLogo, signOut, isPlatformAdmin, trialDaysLeft, isTrialExpired, orgPlan } = useAuth();
+  const { user, profile, isAdmin, userRole, signOut, isPlatformAdmin, trialDaysLeft, isTrialExpired, orgPlan } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { departments, hasDepartments } = useTaskDepartments();
-  const orgLogoImg = isPlatformAdmin ? null : orgLogoSrc(orgLogo);
   const openCounts = useOpenTaskCounts();
 
   // '/tasks/d/digicom' -> 'digicom'; the combined '/tasks' list has no key.
@@ -96,23 +95,7 @@ export function Layout({ children }: LayoutProps) {
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border">
-        {orgLogoImg ? (
-          <img
-            src={orgLogoImg}
-            alt=""
-            className="h-8 w-8 shrink-0 rounded object-contain bg-white/5"
-            // A logo that fails to load must not leave a broken-image icon
-            // sitting in the sidebar for everyone in the org.
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : (
-          <Settings className="h-5 w-5 text-sidebar-primary" />
-        )}
-        <span className="font-bold text-sm text-sidebar-strong truncate">{isPlatformAdmin ? 'Task Platform' : (orgName || 'Work-Sync')}</span>
-      </div>
+      <OrgSwitcher />
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
