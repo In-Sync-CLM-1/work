@@ -96,6 +96,8 @@ function AppRoutes() {
       {/* Protected routes */}
       <Route path="/dashboard" element={<ProtectedRoute><SmartDashboard /></ProtectedRoute>} />
       <Route path="/tasks" element={<ProtectedRoute requireOrg><TasksPage /></ProtectedRoute>} />
+      {/* Same page, scoped to one department (General / Digicom / Livecom …) */}
+      <Route path="/tasks/d/:key" element={<ProtectedRoute requireOrg><TasksPage /></ProtectedRoute>} />
       <Route path="/tasks/:id" element={<ProtectedRoute requireOrg><TaskDetailPage /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 

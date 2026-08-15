@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useTaskDepartments } from '@/hooks/useTaskDepartments';
 import { NotificationBell } from '@/components/tasks/NotificationBell';
 import { CreateTaskFAB } from '@/components/tasks/CreateTaskFAB';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,6 +35,7 @@ export function Layout({ children }: LayoutProps) {
   const { user, profile, isAdmin, userRole, orgName, signOut, isPlatformAdmin, trialDaysLeft, isTrialExpired, orgPlan } = useAuth();
   const { theme, toggle: toggleTheme } = useTheme();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { departments, hasDepartments } = useTaskDepartments();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -43,8 +45,6 @@ export function Layout({ children }: LayoutProps) {
   }, [location.pathname, isMobile]);
 
   const showTrialBanner = !isPlatformAdmin && orgPlan === 'trial' && trialDaysLeft !== null && (isTrialExpired || trialDaysLeft <= 5);
-
-  const isOnTasks = location.pathname === '/tasks';
 
   const taskSubItems = [
     { label: 'All', status: 'all', color: 'bg-gray-400' },
@@ -57,12 +57,15 @@ export function Layout({ children }: LayoutProps) {
 
   const currentStatus = new URLSearchParams(location.search).get('status') || 'all';
 
+  // Orgs with departments configured get one entry per department instead of a
+  // single combined Tasks link — the way Redefine Marcom's team navigates today.
+  const taskNavItems = hasDepartments
+    ? departments.map((d) => ({ to: `/tasks/d/${d.key}`, icon: ListTodo, label: d.label }))
+    : [{ to: '/tasks', icon: ListTodo, label: 'Tasks' }];
+
   const navItems = isPlatformAdmin
     ? [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }]
-    : [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/tasks', icon: ListTodo, label: 'Tasks' },
-      ];
+    : [{ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }, ...taskNavItems];
 
   const platformAdminNavItems = isPlatformAdmin
     ? [
@@ -92,14 +95,17 @@ export function Layout({ children }: LayoutProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
-          if (item.to === '/tasks') {
+          if (item.to === '/tasks' || item.to.startsWith('/tasks/d/')) {
+            // Status sub-items belong to whichever list this is, so they keep
+            // you inside the same department instead of jumping to all tasks.
+            const isCurrentList = location.pathname === item.to;
             return (
               <div key={item.to}>
                 <Link
-                  to="/tasks"
+                  to={item.to}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                    isOnTasks
+                    isCurrentList
                       ? 'bg-sidebar-accent text-sidebar-primary'
                       : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong'
                   )}
@@ -109,8 +115,8 @@ export function Layout({ children }: LayoutProps) {
                 </Link>
                 <div className="mt-1 ml-4 pl-3 border-l border-sidebar-border space-y-0.5">
                   {taskSubItems.map((sub) => {
-                    const isActive = isOnTasks && currentStatus === sub.status;
-                    const href = sub.status === 'all' ? '/tasks' : `/tasks?status=${sub.status}`;
+                    const isActive = isCurrentList && currentStatus === sub.status;
+                    const href = sub.status === 'all' ? item.to : `${item.to}?status=${sub.status}`;
                     return (
                       <Link
                         key={sub.status}
