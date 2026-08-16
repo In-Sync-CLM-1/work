@@ -33,7 +33,11 @@ const TEMPLATES = [
           {
             type: 'URL',
             text: 'Open Task',
-            url: 'https://task.in-sync.co.in/tasks/{{1}}',
+            // task.in-sync.co.in has never resolved -- the already-approved
+            // template still carries it, so its "Open Task" button is dead.
+            // Fixing that needs a re-submission under a new template name
+            // (Meta won't edit an approved URL in place).
+            url: 'https://work.in-sync.co.in/tasks/{{1}}',
             example: ['e3b0c442-98fc-4def-b1ab-5a3d2f8e1c09'],
           },
         ],

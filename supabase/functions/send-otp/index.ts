@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
     if (dbError) throw new Error('Failed to store verification: ' + dbError.message);
 
     // ── Send email OTP via Resend ──────────────────────────────────────────
+    // Deliberately NOT org-scoped: this runs during sign-up, before the person
+    // belongs to any organisation, so there is no org identity to send under.
+    // Verification codes go out as Work-Sync from the platform default.
     const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
     const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notifications@in-sync.co.in';
 
