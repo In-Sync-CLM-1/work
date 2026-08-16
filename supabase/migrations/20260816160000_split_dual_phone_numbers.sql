@@ -20,10 +20,22 @@ COMMENT ON COLUMN public.profiles.phone_alt IS
 
 -- Idempotent: once this has run, no `phone` value contains a separator, so a
 -- re-run matches nothing. An existing phone_alt is never overwritten.
+--
+-- The split is computed in a CTE rather than a LATERAL in the FROM clause:
+-- an UPDATE's target table is not visible to a LATERAL subquery beside it,
+-- which fails with "invalid reference to FROM-clause entry".
+WITH split AS (
+  SELECT
+    id,
+    btrim(split_part(translate(phone, ',;|', '///'), '/', 1))            AS first_num,
+    NULLIF(btrim(split_part(translate(phone, ',;|', '///'), '/', 2)), '') AS second_num
+  FROM public.profiles
+  WHERE phone ~ '[,;/|]'
+)
 UPDATE public.profiles p
 SET
-  phone      = btrim(split_part(n.normalised, '/', 1)),
-  phone_alt  = COALESCE(p.phone_alt, NULLIF(btrim(split_part(n.normalised, '/', 2)), '')),
+  phone      = s.first_num,
+  phone_alt  = COALESCE(p.phone_alt, s.second_num),
   updated_at = now()
-FROM LATERAL (SELECT translate(p.phone, ',;|', '///') AS normalised) n
-WHERE p.phone ~ '[,;/|]';
+FROM split s
+WHERE s.id = p.id;
