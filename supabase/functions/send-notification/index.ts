@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { resolveSender } from '../_shared/notificationSender.ts';
+import { toExotelRecipient } from '../_shared/phone.ts';
 
 interface NotificationRecord {
   id: string;
@@ -258,7 +259,12 @@ Deno.serve(async (req) => {
     // changes, so all approved Work-Sync templates work from it unchanged.
     const exotelWhatsAppFrom = sender.whatsappFrom;
 
-    if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && profile.phone) {
+    const whatsappTo = toExotelRecipient(profile.phone);
+    if (profile.phone && !whatsappTo) {
+      console.error(`Unusable phone on profile ${notification.user_id}; WhatsApp skipped.`);
+    }
+
+    if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && whatsappTo) {
       try {
         const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
         const waRes = await fetch(
@@ -274,7 +280,7 @@ Deno.serve(async (req) => {
                 messages: [
                   {
                     from: exotelWhatsAppFrom,
-                    to: profile.phone,
+                    to: whatsappTo,
                     content: buildWhatsAppTemplateBody(
                       profile.full_name || 'there',
                       taskName,

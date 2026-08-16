@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 import { resolveSender } from '../_shared/notificationSender.ts';
+import { toExotelRecipient } from '../_shared/phone.ts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -363,7 +364,8 @@ Deno.serve(async (req) => {
         const waOverdue = `${displayOverdue}`;
 
         // WhatsApp
-        if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && user.phone) {
+        const whatsappTo = toExotelRecipient(user.phone);
+        if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && whatsappTo) {
           try {
             const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
             await fetch(`https://api.exotel.com/v2/accounts/${exotelAccountSid}/messages`, {
@@ -373,7 +375,7 @@ Deno.serve(async (req) => {
                 whatsapp: {
                   messages: [{
                     from: exotelWhatsAppFrom,
-                    to: user.phone,
+                    to: whatsappTo,
                     content: {
                       type: 'template',
                       template: {
