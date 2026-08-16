@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { toExotelRecipient } from '../_shared/phone.ts';
 
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -50,6 +51,17 @@ Deno.serve(async (req) => {
     if (!email || !phone) {
       return new Response(
         JSON.stringify({ error: 'Email and phone are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Reject an unusable number here rather than at the Exotel call: sign-up
+    // can't complete without the code, so "we couldn't read your number" is
+    // far more useful than a verification that never arrives.
+    const whatsappTo = toExotelRecipient(phone);
+    if (!whatsappTo) {
+      return new Response(
+        JSON.stringify({ error: 'That mobile number does not look valid. Please check and try again.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -112,7 +124,7 @@ Deno.serve(async (req) => {
           whatsapp: {
             messages: [{
               from: exotelFrom,
-              to: phone,
+              to: whatsappTo,
               content: {
                 type: 'template',
                 template: {
