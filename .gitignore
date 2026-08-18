@@ -29,3 +29,7 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# Promo/video pipeline build output
+remotion-promo/out/
+remotion-promo/node_modules/

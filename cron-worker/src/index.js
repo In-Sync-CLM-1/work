@@ -1,6 +1,6 @@
 // work-sync external scheduler — ONE Cloudflare Worker per task.
-const FN_BASE = "https://rdhvkluvkieajtmpljyz.supabase.co/functions/v1";
-const RPC_BASE = "https://rdhvkluvkieajtmpljyz.supabase.co/rest/v1/rpc";
+const FN_BASE = "https://dhbeivfeuewzkdeqkjpa.supabase.co/functions/v1";
+const RPC_BASE = "https://dhbeivfeuewzkdeqkjpa.supabase.co/rest/v1/rpc";
 
 async function tick(env) {
   if (!env.TARGET_FN) return new Response("no TARGET_FN configured\n", { status: 500 });

@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { resolveSender } from '../_shared/notificationSender.ts';
+import { toExotelRecipient } from '../_shared/phone.ts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -76,13 +78,14 @@ function buildSummaryEmail(opts: {
   completionRate: number;
   onTimePct: number;
   aiInsight: string;
+  appBaseUrl: string;
   topPerformer?: string;
   memberRows?: { name: string; completed: number; overdue: number; rate: number }[];
 }): string {
   const {
     userName, period, periodRange, isAdmin,
     completed, inProgress, overdue, total, completionRate, onTimePct,
-    aiInsight, topPerformer, memberRows,
+    aiInsight, appBaseUrl, topPerformer, memberRows,
   } = opts;
 
   const memberTable = isAdmin && memberRows && memberRows.length > 0
@@ -190,7 +193,7 @@ function buildSummaryEmail(opts: {
         <!-- CTA -->
         <tr>
           <td style="padding:0 36px 28px;">
-            <a href="https://task.in-sync.co.in/dashboard" style="display:inline-block;background:#1e293b;color:#fff;text-decoration:none;padding:11px 28px;border-radius:8px;font-size:13px;font-weight:600;">View Dashboard</a>
+            <a href="${appBaseUrl}/dashboard" style="display:inline-block;background:#1e293b;color:#fff;text-decoration:none;padding:11px 28px;border-radius:8px;font-size:13px;font-weight:600;">View Dashboard</a>
           </td>
         </tr>
 
@@ -222,12 +225,9 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notifications@in-sync.co.in';
     const exotelApiKey = Deno.env.get('EXOTEL_API_KEY');
     const exotelApiToken = Deno.env.get('EXOTEL_API_TOKEN');
     const exotelAccountSid = Deno.env.get('EXOTEL_ACCOUNT_SID');
-    const exotelWhatsAppFrom = Deno.env.get('EXOTEL_WHATSAPP_NUMBER');
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     const { start, end, label } = getPeriodRange(period);
@@ -247,6 +247,12 @@ Deno.serve(async (req) => {
     const allResults = [];
 
     for (const org of orgs) {
+      // Each org's summaries go out under its own sender identity; an org with
+      // no configured identity gets the platform default, as before.
+      const sender = await resolveSender(adminClient, org.id);
+      const resendApiKey = sender.resendApiKey;
+      const exotelWhatsAppFrom = sender.whatsappFrom;
+
       // ── Fetch tasks for the period ─────────────────────────────────────────
       const { data: tasks } = await adminClient
         .from('tasks')
@@ -358,7 +364,8 @@ Deno.serve(async (req) => {
         const waOverdue = `${displayOverdue}`;
 
         // WhatsApp
-        if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && user.phone) {
+        const whatsappTo = toExotelRecipient(user.phone);
+        if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && whatsappTo) {
           try {
             const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
             await fetch(`https://api.exotel.com/v2/accounts/${exotelAccountSid}/messages`, {
@@ -368,7 +375,7 @@ Deno.serve(async (req) => {
                 whatsapp: {
                   messages: [{
                     from: exotelWhatsAppFrom,
-                    to: user.phone,
+                    to: whatsappTo,
                     content: {
                       type: 'template',
                       template: {
@@ -410,6 +417,7 @@ Deno.serve(async (req) => {
               completionRate: displayRate,
               onTimePct: displayOnTimePct,
               aiInsight: userInsight,
+              appBaseUrl: sender.appBaseUrl,
               topPerformer: isAdmin ? topPerformerName : undefined,
               memberRows: isAdmin ? memberRows : undefined,
             });
@@ -418,7 +426,7 @@ Deno.serve(async (req) => {
               method: 'POST',
               headers: { Authorization: `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                from: `Work-Sync <${fromEmail}>`,
+                from: `${sender.fromName} <${sender.fromEmail}>`,
                 to: [user.email],
                 subject: `Your ${label} Work-Sync Summary`,
                 html,

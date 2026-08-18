@@ -1,5 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
+import { resolveSender } from '../_shared/notificationSender.ts';
+import { toExotelRecipient } from '../_shared/phone.ts';
 
 interface NotificationRecord {
   id: string;
@@ -15,6 +17,7 @@ interface TaskDetails {
   description: string | null;
   due_date: string | null;
   assigned_by: string | null;
+  org_id: string | null;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -26,6 +29,7 @@ function formatDate(dateStr: string | null): string {
 function buildEmailHtml(
   notification: NotificationRecord,
   userName: string,
+  appBaseUrl: string,
 ): string {
   const typeLabel: Record<string, string> = {
     task_assigned: 'New Task Assigned',
@@ -65,7 +69,7 @@ function buildEmailHtml(
             <p style="margin:0 0 24px;color:#6b7280;font-size:13px;line-height:1.6;">${notification.message}</p>
             ${
               notification.task_id
-                ? `<a href="https://task.in-sync.co.in/tasks/${notification.task_id}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">View Task</a>`
+                ? `<a href="${appBaseUrl}/tasks/${notification.task_id}" style="display:inline-block;background:#7c3aed;color:#fff;text-decoration:none;padding:10px 24px;border-radius:8px;font-size:13px;font-weight:600;">View Task</a>`
                 : ''
             }
           </td>
@@ -167,7 +171,7 @@ Deno.serve(async (req) => {
     // Look up recipient profile
     const { data: profile, error: profileError } = await adminClient
       .from('profiles')
-      .select('email, phone, full_name')
+      .select('email, phone, full_name, org_id')
       .eq('id', notification.user_id)
       .single();
 
@@ -185,14 +189,20 @@ Deno.serve(async (req) => {
     let description = notification.message;
     let dueDate = 'Not set';
 
+    // The task's own org is the truest answer to "who is this notification
+    // from" -- a member of several orgs has one `profiles.org_id` (whichever
+    // they last switched to), which may not be the org the task belongs to.
+    let orgId: string | null = profile.org_id ?? null;
+
     if (notification.task_id) {
       const { data: task } = await adminClient
         .from('tasks')
-        .select('task_name, description, due_date, assigned_by')
+        .select('task_name, description, due_date, assigned_by, org_id')
         .eq('id', notification.task_id)
         .single<TaskDetails>();
 
       if (task) {
+        orgId = task.org_id ?? orgId;
         taskName = task.task_name;
         description = task.description || notification.message;
         dueDate = formatDate(task.due_date);
@@ -213,11 +223,13 @@ Deno.serve(async (req) => {
       whatsapp: null,
     };
 
+    // Who this notification comes from depends on the org it belongs to.
+    const sender = await resolveSender(adminClient, orgId);
+
     // ==================== EMAIL via Resend ====================
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const resendApiKey = sender.resendApiKey;
     if (resendApiKey && profile.email) {
       try {
-        const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'notifications@in-sync.co.in';
         const emailRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -225,10 +237,10 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: `Work-Sync <${fromEmail}>`,
+            from: `${sender.fromName} <${sender.fromEmail}>`,
             to: [profile.email],
             subject: notification.title,
-            html: buildEmailHtml(notification, profile.full_name || 'there'),
+            html: buildEmailHtml(notification, profile.full_name || 'there', sender.appBaseUrl),
           }),
         });
         results.email = await emailRes.json();
@@ -243,9 +255,16 @@ Deno.serve(async (req) => {
     const exotelApiKey = Deno.env.get('EXOTEL_API_KEY');
     const exotelApiToken = Deno.env.get('EXOTEL_API_TOKEN');
     const exotelAccountSid = Deno.env.get('EXOTEL_ACCOUNT_SID');
-    const exotelWhatsAppFrom = Deno.env.get('EXOTEL_WHATSAPP_NUMBER');
+    // Same Exotel account and WABA for every org -- only the sender number
+    // changes, so all approved Work-Sync templates work from it unchanged.
+    const exotelWhatsAppFrom = sender.whatsappFrom;
 
-    if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && profile.phone) {
+    const whatsappTo = toExotelRecipient(profile.phone);
+    if (profile.phone && !whatsappTo) {
+      console.error(`Unusable phone on profile ${notification.user_id}; WhatsApp skipped.`);
+    }
+
+    if (exotelApiKey && exotelApiToken && exotelAccountSid && exotelWhatsAppFrom && whatsappTo) {
       try {
         const credentials = btoa(`${exotelApiKey}:${exotelApiToken}`);
         const waRes = await fetch(
@@ -261,7 +280,7 @@ Deno.serve(async (req) => {
                 messages: [
                   {
                     from: exotelWhatsAppFrom,
-                    to: profile.phone,
+                    to: whatsappTo,
                     content: buildWhatsAppTemplateBody(
                       profile.full_name || 'there',
                       taskName,
