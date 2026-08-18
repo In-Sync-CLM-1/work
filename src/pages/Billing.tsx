@@ -155,7 +155,7 @@ export function BillingPage() {
         <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
           <Wallet className="h-6 w-6 md:h-7 md:w-7 text-primary" />
           Billing &{' '}
-          <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="text-primary">
             Subscription
           </span>
         </h1>
@@ -206,7 +206,7 @@ export function BillingPage() {
           {/* Cycle toggle */}
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h2 className="text-base font-bold flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-fuchsia-500" />
+              <Sparkles className="h-4 w-4 text-primary" />
               {isTrialExpired ? 'Choose your plan' : isOnTrial ? 'Upgrade to keep access' : 'Change your plan'}
             </h2>
             <div className="inline-flex items-center rounded-lg border bg-muted/30 p-0.5 text-xs">
@@ -261,7 +261,7 @@ export function BillingPage() {
                 >
                   {plan.highlighted && (
                     <div className="absolute -top-px right-5">
-                      <span className="inline-flex items-center gap-1 rounded-b-md bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                      <span className="inline-flex items-center gap-1 rounded-b-md bg-primary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">
                         <Crown className="h-3 w-3" /> Popular
                       </span>
                     </div>
@@ -329,10 +329,10 @@ export function BillingPage() {
           </div>
 
           {/* Payment instructions card */}
-          <motion.div variants={fadeUp} className="mt-4 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-fuchsia-50 to-pink-50 p-5 md:p-6">
+          <motion.div variants={fadeUp} className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-600 mb-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1">
                   Your selected plan
                 </p>
                 <p className="text-lg font-bold">
@@ -355,7 +355,7 @@ export function BillingPage() {
                   </div>
                 </div>
                 <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Total payable</p>
-                <p className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent leading-tight">
+                <p className="text-3xl md:text-4xl font-extrabold text-primary leading-tight">
                   {fmtINR(grandTotal)}
                 </p>
                 <p className="text-[10px] text-muted-foreground">Incl. {GST_PERCENT}% GST</p>
@@ -364,7 +364,7 @@ export function BillingPage() {
                 type="button"
                 onClick={handlePay}
                 disabled={paying}
-                className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-sm font-semibold shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:bg-primary/90 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 {paying ? (
                   <>
@@ -392,10 +392,10 @@ export function BillingPage() {
                 <span>Payment successful — your <strong>Work-Sync {selectedDef.name}</strong> plan is now active. Full access has been restored.</span>
               </div>
             )}
-            <div className="mt-4 pt-4 border-t border-violet-200/50 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="mt-4 pt-4 border-t border-primary/15 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
               <ContactRow icon={MessageCircle} label="WhatsApp" value="+91 99999 99999" color="text-emerald-600" />
               <ContactRow icon={Mail} label="Email" value="billing@in-sync.co.in" color="text-sky-600" />
-              <ContactRow icon={Phone} label="Call" value="Mon–Sat, 10–7 IST" color="text-violet-600" />
+              <ContactRow icon={Phone} label="Call" value="Mon–Sat, 10–7 IST" color="text-primary" />
             </div>
           </motion.div>
         </motion.div>

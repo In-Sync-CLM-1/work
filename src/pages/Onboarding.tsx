@@ -110,7 +110,7 @@ export function OnboardingPage() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <a href="/" className="text-lg font-bold">
-            <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-primary">
               Work-Sync
             </span>
           </a>
@@ -134,7 +134,7 @@ export function OnboardingPage() {
           <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
             {/* Card Header */}
             <div className="text-center px-8 pt-8 pb-4">
-              <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/25">
+              <div className="mx-auto mb-4 h-14 w-14 rounded-2xl brand-gradient flex items-center justify-center shadow-lg shadow-primary/25">
                 <Building2 className="h-7 w-7 text-white" />
               </div>
               <h1 className="text-2xl font-bold">Register Your Organization</h1>
@@ -254,7 +254,7 @@ export function OnboardingPage() {
                       transition={{ duration: 0.3 }}
                       className="space-y-4 overflow-hidden"
                     >
-                      <div className="rounded-lg bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800 p-3 text-xs text-violet-700 dark:text-violet-300">
+                      <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-primary">
                         OTPs sent to <strong>{adminEmail}</strong> and your WhatsApp <strong>{adminPhone}</strong>.
                       </div>
 

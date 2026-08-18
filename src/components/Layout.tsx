@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ListTodo, LogOut, User, Users, Menu, X, Wallet, Clock, AlertTriangle,
   MessageCircle, Mail, MapPin, ShieldCheck, Calendar, Headphones, UserCheck, Receipt, ExternalLink,
-  Sparkles, Building, Sun, Moon,
+  Building, Sun, Moon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useTheme } from '@/lib/theme-context';
@@ -178,12 +178,8 @@ export function Layout({ children }: LayoutProps) {
 
         {platformAdminNavItems.length > 0 && (
           <>
-            <div className="pt-4 pb-2 px-3 flex items-center gap-1.5">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-fuchsia-400/50" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em] bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-transparent">
+            <div className="pt-4 pb-2 px-3">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
                 Platform Admin
               </span>
             </div>
@@ -194,14 +190,11 @@ export function Layout({ children }: LayoutProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
                   location.pathname === item.to
-                    ? 'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 text-sidebar-strong ring-1 ring-fuchsia-400/30'
+                    ? 'bg-sidebar-accent text-sidebar-primary'
                     : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong'
                 )}
               >
-                <item.icon className={cn(
-                  'h-4.5 w-4.5',
-                  location.pathname === item.to ? 'text-fuchsia-300' : ''
-                )} />
+                <item.icon className="h-4.5 w-4.5" />
                 {item.label}
               </Link>
             ))}
@@ -235,39 +228,28 @@ export function Layout({ children }: LayoutProps) {
 
         {!isPlatformAdmin && (
           <div className="pt-4">
-            <div className="relative rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/10 via-fuchsia-500/5 to-transparent p-2 shadow-[0_0_30px_-15px_rgba(139,92,246,0.5)]">
-              {/* Animated heading */}
-              <div className="flex items-center justify-between px-2 py-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="relative flex h-3.5 w-3.5 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-fuchsia-400/40" />
-                    <Sparkles className="relative h-3 w-3 text-fuchsia-300" />
-                  </span>
-                  <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300 bg-clip-text text-[11px] font-bold uppercase tracking-[0.15em] text-transparent">
-                    Explore Platforms
-                  </span>
-                </div>
-                <span className="rounded-full bg-fuchsia-500/20 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-200 ring-1 ring-fuchsia-400/30">
-                  {platformLinks.length}
-                </span>
-              </div>
-              {/* Gradient divider */}
-              <div className="mx-2 mb-1 h-px bg-gradient-to-r from-transparent via-fuchsia-400/40 to-transparent" />
-              <div className="space-y-0.5">
-                {platformLinks.map((p) => (
-                  <a
-                    key={p.href}
-                    href={p.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong transition-colors"
-                  >
-                    <p.icon className={cn('h-3.5 w-3.5 flex-shrink-0', p.color)} />
-                    <span className="flex-1 truncate">{p.label}</span>
-                    <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-40 group-hover:opacity-100" />
-                  </a>
-                ))}
-              </div>
+            <div className="flex items-center justify-between px-3 pb-2">
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+                Explore Platforms
+              </span>
+              <span className="rounded-full bg-sidebar-accent px-1.5 py-0.5 text-[9px] font-semibold text-sidebar-foreground/70">
+                {platformLinks.length}
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              {platformLinks.map((p) => (
+                <a
+                  key={p.href}
+                  href={p.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-strong transition-colors"
+                >
+                  <p.icon className={cn('h-3.5 w-3.5 flex-shrink-0', p.color)} />
+                  <span className="flex-1 truncate">{p.label}</span>
+                  <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-40 group-hover:opacity-100" />
+                </a>
+              ))}
             </div>
           </div>
         )}

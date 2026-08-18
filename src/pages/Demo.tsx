@@ -130,8 +130,8 @@ function MiniBarChart() {
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-semibold text-foreground">Tasks Created vs Completed</p>
         <div className="flex gap-3 text-[9px] text-muted-foreground">
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-violet-500" /> Created</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-purple-400" /> Completed</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> Created</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-sky-500" /> Completed</span>
         </div>
       </div>
       <div className="flex items-end gap-2" style={{ height: 80 }}>
@@ -139,13 +139,13 @@ function MiniBarChart() {
           <div key={i} className="flex flex-1 flex-col items-center gap-px">
             <div className="flex w-full items-end gap-px" style={{ height: 70 }}>
               <motion.div
-                className="flex-1 rounded-t bg-violet-500"
+                className="flex-1 rounded-t bg-primary"
                 initial={{ height: 0 }}
                 animate={{ height: `${(d / max) * 100}%` }}
                 transition={{ duration: 0.8, delay: 1.0 + i * 0.1, ease: 'easeOut' }}
               />
               <motion.div
-                className="flex-1 rounded-t bg-purple-400"
+                className="flex-1 rounded-t bg-sky-500"
                 initial={{ height: 0 }}
                 animate={{ height: `${((d * 0.7) / max) * 100}%` }}
                 transition={{ duration: 0.8, delay: 1.1 + i * 0.1, ease: 'easeOut' }}
@@ -166,7 +166,7 @@ function SceneIntro() {
     <motion.div {...fade} className="flex h-full flex-col items-center justify-center bg-background">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-1/3 left-1/4 h-[400px] w-[400px] rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute bottom-1/3 right-1/4 h-[300px] w-[300px] rounded-full bg-violet-500/8 blur-[100px]" />
+        <div className="absolute bottom-1/3 right-1/4 h-[300px] w-[300px] rounded-full bg-primary/8 blur-[100px]" />
       </div>
 
       <motion.div
@@ -233,7 +233,7 @@ function SceneDashboard() {
         <motion.div {...slideUp(0)} className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-foreground">
-              Task <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">Command Center</span>
+              Task <span className="text-primary">Command Center</span>
             </h2>
             <p className="text-xs text-muted-foreground">Monitor and manage your team's progress</p>
           </div>
@@ -243,7 +243,7 @@ function SceneDashboard() {
           <KpiCard label="My Open Tasks" value="12" color="from-sky-500 to-blue-600" icon={ListTodo} delay={0.15} />
           <KpiCard label="Overdue Tasks" value="3" color="from-rose-500 to-pink-600" icon={AlertTriangle} delay={0.25} />
           <KpiCard label="Completed This Week" value="28" color="from-emerald-500 to-green-600" icon={CheckCircle} delay={0.35} />
-          <KpiCard label="Total Tasks" value="156" color="from-violet-500 to-purple-600" icon={Clock} delay={0.45} />
+          <KpiCard label="Total Tasks" value="156" color="from-primary to-sky-600" icon={Clock} delay={0.45} />
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -536,7 +536,7 @@ function SceneUsers() {
   ];
 
   const roleBadge: Record<string, string> = {
-    Admin: 'text-purple-700 bg-purple-50 border-purple-200',
+    Admin: 'text-primary bg-primary/5 border-primary/20',
     Manager: 'text-blue-700 bg-blue-50 border-blue-200',
     'Sales Agent': 'text-gray-700 bg-gray-50 border-gray-200',
   };
@@ -631,7 +631,7 @@ function SceneDesignations() {
                 <h3 className="text-sm font-semibold text-foreground">{d.name}</h3>
                 <Edit className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium border text-purple-700 bg-purple-50 border-purple-200">{d.role}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium border text-primary bg-primary/5 border-primary/20">{d.role}</span>
               {d.reports && (
                 <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" /> Reports to: {d.reports}

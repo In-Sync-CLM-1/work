@@ -44,12 +44,12 @@ const METHOD_LABELS: Record<string, string> = {
 
 const PLAN_BADGE: Record<string, string> = {
   trial: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200',
-  team: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200',
+  team: 'bg-primary/10 text-primary ring-1 ring-primary/20',
   business: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
 };
 
 const AVATAR_GRADIENTS = [
-  'from-violet-500 to-purple-600',
+  'from-primary to-sky-600',
   'from-sky-500 to-blue-600',
   'from-emerald-500 to-green-600',
   'from-amber-500 to-orange-500',
@@ -205,7 +205,7 @@ export function PlatformOrgDetail() {
       </motion.div>
 
       {/* Hero card */}
-      <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 p-6 md:p-8 text-white shadow-xl mb-5">
+      <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl brand-gradient p-6 md:p-8 text-white shadow-xl mb-5">
         <div className="absolute -top-12 -right-12 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-16 -left-12 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -244,7 +244,7 @@ export function PlatformOrgDetail() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={() => setManageOpen(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-violet-700 font-semibold text-sm shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-primary font-semibold text-sm shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
             >
               <Settings2 className="h-4 w-4" /> Manage
             </button>
@@ -261,11 +261,11 @@ export function PlatformOrgDetail() {
       {/* KPI strip */}
       <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
         <KpiTile label="Members" value={summary.activeMembers} icon={Users} gradient="from-sky-500 to-blue-600" />
-        <KpiTile label="Total Tasks" value={summary.totalTasks} icon={ListTodo} gradient="from-violet-500 to-purple-600" />
+        <KpiTile label="Total Tasks" value={summary.totalTasks} icon={ListTodo} gradient="from-primary to-sky-600" />
         <KpiTile label="Active" value={summary.activeTasks} icon={Clock} gradient="from-amber-500 to-orange-500" />
         <KpiTile label="Overdue" value={summary.overdueTasks} icon={AlertTriangle} gradient="from-rose-500 to-pink-600" />
         <KpiTile label="Done %" value={`${summary.completionRate}%`} icon={CheckCircle} gradient="from-emerald-500 to-green-600" />
-        <KpiTile label="Revenue" value={fmtINR(summary.totalRevenue)} icon={IndianRupee} gradient="from-fuchsia-500 to-pink-600" />
+        <KpiTile label="Revenue" value={fmtINR(summary.totalRevenue)} icon={IndianRupee} gradient="from-cyan-500 to-teal-600" />
       </motion.div>
 
       {/* Tabs */}
@@ -337,7 +337,7 @@ export function PlatformOrgDetail() {
               <GlanceRow label="Tasks completed" value={summary.completedTasks} total={summary.totalTasks} color="bg-emerald-500" />
               <GlanceRow label="In progress" value={summary.activeTasks} total={summary.totalTasks} color="bg-blue-500" />
               <GlanceRow label="Overdue" value={summary.overdueTasks} total={summary.totalTasks} color="bg-rose-500" />
-              <GlanceRow label="Active members" value={summary.activeMembers} total={members.length} color="bg-violet-500" />
+              <GlanceRow label="Active members" value={summary.activeMembers} total={members.length} color="bg-primary" />
             </div>
           </div>
         </motion.div>

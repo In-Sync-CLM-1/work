@@ -38,7 +38,7 @@ export const PLANS: PlanDef[] = [
       'Comments & attachments',
     ],
     highlighted: true,
-    gradient: 'from-violet-500 to-purple-600',
+    gradient: 'from-primary to-sky-600',
   },
   {
     id: 'business',

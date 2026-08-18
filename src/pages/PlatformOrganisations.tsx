@@ -49,7 +49,7 @@ function SortHeader({ label, k, align = 'left', sortKey, sortDir, onToggle }: So
 
 const PLAN_BADGE: Record<string, string> = {
   trial: 'bg-amber-100 text-amber-700 ring-1 ring-amber-200',
-  team: 'bg-violet-100 text-violet-700 ring-1 ring-violet-200',
+  team: 'bg-primary/10 text-primary ring-1 ring-primary/20',
   business: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200',
 };
 
@@ -235,10 +235,8 @@ export function PlatformOrganisations() {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <span className="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-transparent">
-                Registered Organisations
-              </span>
-              <Sparkles className="h-5 w-5 text-fuchsia-500" />
+              Registered Organisations
+              <Sparkles className="h-5 w-5 text-primary" />
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Master data for every organisation on the platform · {stats.total} total
@@ -253,7 +251,7 @@ export function PlatformOrganisations() {
           label="Total Orgs"
           value={stats.total}
           icon={Building2}
-          gradient="from-violet-500 to-purple-600"
+          gradient="from-primary to-sky-600"
           active={planFilter === 'all' && statusFilter === 'all' && sortKey === 'createdAt'}
           onClick={() => { setPlanFilter('all'); setStatusFilter('all'); setSortKey('createdAt'); setSortDir('desc'); }}
         />
@@ -353,7 +351,7 @@ export function PlatformOrganisations() {
                     <div className="flex items-center gap-3">
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white font-semibold text-xs flex-shrink-0
                         ${org.plan === 'business' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
-                          org.plan === 'team' ? 'bg-gradient-to-br from-violet-500 to-purple-600' :
+                          org.plan === 'team' ? 'bg-gradient-to-br from-primary to-sky-600' :
                           'bg-gradient-to-br from-amber-500 to-orange-500'}`}>
                         {org.name.slice(0, 2).toUpperCase()}
                       </div>
@@ -431,7 +429,7 @@ export function PlatformOrganisations() {
                     >
                       <button
                         onClick={(e) => { e.stopPropagation(); setManagingOrg(org); }}
-                        className="p-1.5 rounded-md hover:bg-violet-100 text-muted-foreground hover:text-violet-700 transition-colors"
+                        className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
                         title="Manage org"
                       >
                         <Settings2 className="h-3.5 w-3.5" />

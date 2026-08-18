@@ -163,7 +163,7 @@ const howItWorks = [
 
 const features = [
   { icon: Phone, title: 'WhatsApp Alerts', desc: 'Instant task notifications on WhatsApp at every lifecycle stage — the one weapon Asana cannot match.', gradient: 'from-emerald-500/10 to-green-500/10' },
-  { icon: CheckCircle, title: 'Satisfaction Confirmation', desc: 'The task giver signs off on completion quality. "Done" is not done until the assigner confirms. No competitor has this.', gradient: 'from-violet-500/10 to-purple-500/10' },
+  { icon: CheckCircle, title: 'Satisfaction Confirmation', desc: 'The task giver signs off on completion quality. "Done" is not done until the assigner confirms. No competitor has this.', gradient: 'from-primary/10 to-primary/5' },
   { icon: Shield, title: 'Designation Hierarchy', desc: 'MD → VP → Manager → Executive. Built for how Indian organisations are actually structured, not flat western teams.', gradient: 'from-sky-500/10 to-blue-500/10' },
   { icon: Mail, title: 'Email + WhatsApp Fallback', desc: 'WhatsApp from wallet. Wallet empty? Notifications fall back to email automatically — no disruption, no surprise charges.', gradient: 'from-amber-500/10 to-orange-500/10' },
   { icon: Sparkles, title: 'AI Insights', desc: 'Smart analysis of overdue rates, workload imbalance, bottlenecks, and performer rankings.', gradient: 'from-rose-500/10 to-pink-500/10' },
@@ -239,7 +239,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-6">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <div className="h-7 w-7 rounded-lg brand-gradient flex items-center justify-center">
               <Zap className="h-4 w-4 text-white" />
             </div>
             <span>Work-Sync</span>
@@ -271,7 +271,7 @@ export function LandingPage() {
       <section ref={heroRef} className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute -top-24 left-1/4 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-400/6 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-primary/6 rounded-full blur-[100px]" />
         </div>
 
         <div
@@ -310,7 +310,7 @@ export function LandingPage() {
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight"
             >
               You gave the task.{' '}
-              <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-primary">
                 Do you know if it's done?
               </span>
             </motion.h1>
@@ -749,7 +749,7 @@ export function LandingPage() {
           <AnimatedSection>
             <motion.div
               variants={fadeUp}
-              className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 to-purple-700 p-12 sm:p-16 text-center text-white"
+              className="relative overflow-hidden rounded-3xl brand-gradient p-12 sm:p-16 text-center text-white"
             >
               <div className="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-3xl" />
               <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/5 rounded-full blur-3xl" />
@@ -763,7 +763,7 @@ export function LandingPage() {
                   <Link
                     to="/register"
                     onClick={() => trackLeadEvent('cta_get_started_free')}
-                    className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-white text-primary font-semibold hover:bg-white/90 transition-all hover:scale-105 shadow-lg"
                   >
                     Get Started Free
                     <ArrowRight className="h-4 w-4" />
@@ -782,7 +782,7 @@ export function LandingPage() {
       <footer className="border-t py-8 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <div className="h-5 w-5 rounded bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+            <div className="h-5 w-5 rounded brand-gradient flex items-center justify-center">
               <Zap className="h-3 w-3 text-white" />
             </div>
             Work-Sync

@@ -37,7 +37,7 @@ function timeAgo(ts: string | null) {
 
 const PLAN_BADGE: Record<string, string> = {
   trial: 'bg-amber-100 text-amber-700',
-  team: 'bg-violet-100 text-violet-700',
+  team: 'bg-primary/10 text-primary',
   business: 'bg-emerald-100 text-emerald-700',
 };
 
@@ -54,7 +54,7 @@ export function PlatformDashboard() {
   const { summary, orgRows, trend, recentActivity } = data;
 
   const kpiCards = [
-    { label: 'Organizations', value: summary.totalOrgs, icon: Building2, gradient: 'from-violet-500 to-purple-600' },
+    { label: 'Organizations', value: summary.totalOrgs, icon: Building2, gradient: 'from-primary to-sky-600' },
     { label: 'Total Users', value: summary.totalUsers, icon: Users, gradient: 'from-sky-500 to-blue-600' },
     { label: 'Total Tasks', value: summary.totalTasks, icon: ListTodo, gradient: 'from-emerald-500 to-green-600' },
     { label: 'Active Tasks', value: summary.activeTasks, icon: Clock, gradient: 'from-amber-500 to-orange-600' },
@@ -68,7 +68,7 @@ export function PlatformDashboard() {
       <motion.div variants={fadeUp} className="mb-5">
         <h1 className="text-2xl font-bold">
           Platform{' '}
-          <span className="bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="text-primary">
             Overview
           </span>
         </h1>

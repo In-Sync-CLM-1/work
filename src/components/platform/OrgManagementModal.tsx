@@ -28,7 +28,7 @@ type Tab = 'trial' | 'payment';
 const PLAN_LABELS: Record<string, string> = { trial: 'Trial', team: 'Team', business: 'Business' };
 
 const planBadgeClass = (plan: string) => {
-  if (plan === 'team') return 'bg-violet-100 text-violet-700';
+  if (plan === 'team') return 'bg-primary/10 text-primary';
   if (plan === 'business') return 'bg-emerald-100 text-emerald-700';
   return 'bg-amber-100 text-amber-700';
 };
@@ -208,7 +208,7 @@ export function OrgManagementModal({ org, open, onClose }: Props) {
                     onClick={() => setPlanTarget(p.id)}
                     className={`relative py-3 px-3 rounded-lg border-2 text-left transition-all ${
                       planTarget === p.id
-                        ? p.id === 'team' ? 'border-violet-400 bg-violet-50' : 'border-emerald-400 bg-emerald-50'
+                        ? p.id === 'team' ? 'border-primary bg-primary/5' : 'border-emerald-400 bg-emerald-50'
                         : 'border-border hover:bg-muted/40'
                     }`}
                   >
@@ -276,12 +276,12 @@ export function OrgManagementModal({ org, open, onClose }: Props) {
             </div>
 
             {/* Calculated total */}
-            <div className="rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-fuchsia-50 to-pink-50 p-3">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-fuchsia-600 flex items-center gap-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-primary flex items-center gap-1">
                   <Sparkles className="h-3 w-3" /> Calculated total
                 </span>
-                <span className="text-2xl font-extrabold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+                <span className="text-2xl font-extrabold text-primary">
                   {fmtINR(computedAmount)}
                 </span>
               </div>

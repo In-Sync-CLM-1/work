@@ -52,13 +52,15 @@ export function OrgSwitcher() {
         <img
           src={logo}
           alt=""
-          className="h-8 w-8 shrink-0 rounded object-contain bg-white/5"
+          className="h-8 w-8 shrink-0 rounded-md object-contain bg-white p-1"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
           }}
         />
       ) : (
-        <ShieldCheck className="h-5 w-5 shrink-0 text-sidebar-primary" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-accent">
+          <ShieldCheck className="h-4.5 w-4.5 text-sidebar-primary" />
+        </div>
       )}
       <span className="font-bold text-sm text-sidebar-strong truncate">{label}</span>
     </>
