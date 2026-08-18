@@ -5,7 +5,7 @@ import {
   ArrowLeft, Calendar, Clock, User, Tag,
   Play, CheckCircle, XCircle, Lock, RotateCcw, Edit, Trash2,
 } from 'lucide-react';
-import type { Task, CreateTaskInput, UpdateTaskInput, TaskAttachment } from '@/types/task';
+import type { Task, CreateTaskInput, UpdateTaskInput, TaskAttachment, BriefFile } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
 import { useTaskDetail } from '@/hooks/useTaskDetail';
 import { useTaskComments } from '@/hooks/useTaskComments';
@@ -19,6 +19,7 @@ import { getStatusColor, getStatusLabel, getPriorityColor, getPriorityLabel } fr
 import * as perms from '@/lib/taskUtils';
 import { TaskComments } from '@/components/tasks/TaskComments';
 import { TaskAttachments } from '@/components/tasks/TaskAttachments';
+import { TaskBriefFiles } from '@/components/tasks/TaskBriefFiles';
 import { AttachmentPreview } from '@/components/tasks/AttachmentPreview';
 import { SubtaskList } from '@/components/tasks/SubtaskList';
 import { MilestoneList } from '@/components/tasks/MilestoneList';
@@ -55,6 +56,7 @@ export function TaskDetailPage() {
   const [editingSubtask, setEditingSubtask] = useState<Task | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<TaskAttachment | null>(null);
+  const [previewBriefFile, setPreviewBriefFile] = useState<BriefFile | null>(null);
 
   if (isLoading) {
     return <div className="text-center py-12 text-muted-foreground">Loading task...</div>;
@@ -342,6 +344,9 @@ export function TaskDetailPage() {
         />
       </div>
 
+      {/* Brief files — handed over at assignment time, separate from ad-hoc attachments */}
+      <TaskBriefFiles files={task.brief_files} onPreview={setPreviewBriefFile} onDownload={handleDownload} />
+
       {/* Attachments */}
       <div className="rounded-lg border bg-card p-6 mb-6">
         <TaskAttachments
@@ -363,6 +368,19 @@ export function TaskDetailPage() {
           attachment={previewAttachment}
           getUrl={getDownloadUrl}
           onClose={() => setPreviewAttachment(null)}
+        />
+      )}
+
+      {previewBriefFile && (
+        <AttachmentPreview
+          attachment={{
+            file_path: previewBriefFile.path,
+            file_name: previewBriefFile.name,
+            file_size: previewBriefFile.size,
+            file_type: previewBriefFile.type,
+          }}
+          getUrl={getDownloadUrl}
+          onClose={() => setPreviewBriefFile(null)}
         />
       )}
 

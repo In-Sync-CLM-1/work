@@ -1,10 +1,17 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, X, FileIcon, Loader2 } from 'lucide-react';
-import type { TaskAttachment } from '@/types/task';
 import { formatFileSize } from '@/lib/utils';
 
 type PreviewKind = 'image' | 'pdf' | 'video' | 'audio' | 'text' | 'unsupported';
+
+/** Common shape both task attachments and brief files can be previewed through. */
+export interface PreviewableFile {
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+}
 
 const TEXT_EXTENSIONS = new Set([
   'txt', 'md', 'markdown', 'log', 'csv', 'tsv', 'json', 'xml', 'yaml', 'yml',
@@ -12,7 +19,7 @@ const TEXT_EXTENSIONS = new Set([
   'go', 'rs', 'java', 'kt', 'c', 'cpp', 'h', 'sh', 'sql', 'env',
 ]);
 
-function getPreviewKind(attachment: TaskAttachment): PreviewKind {
+function getPreviewKind(attachment: PreviewableFile): PreviewKind {
   const mime = (attachment.file_type || '').toLowerCase();
   const ext = attachment.file_name.split('.').pop()?.toLowerCase() || '';
 
@@ -27,7 +34,7 @@ function getPreviewKind(attachment: TaskAttachment): PreviewKind {
 }
 
 interface AttachmentPreviewProps {
-  attachment: TaskAttachment;
+  attachment: PreviewableFile;
   getUrl: (filePath: string, opts?: { download?: boolean | string }) => Promise<string>;
   onClose: () => void;
 }
