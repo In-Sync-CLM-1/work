@@ -154,6 +154,16 @@
   background-image: linear-gradient(135deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--sidebar-background) / 0.06) 100%);
 }
 
+/* Scrolls, but no visible track — for the sidebar nav, where a native
+   scrollbar would sit oddly against the dark ink background. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }

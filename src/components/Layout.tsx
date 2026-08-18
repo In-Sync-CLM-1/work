@@ -98,7 +98,7 @@ export function Layout({ children }: LayoutProps) {
       <OrgSwitcher />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
         {navItems.map((item) => {
           if (item.to === '/tasks' || item.to.startsWith('/tasks/d/')) {
             // Status sub-items belong to whichever list this is, so they keep
