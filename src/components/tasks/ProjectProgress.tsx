@@ -98,7 +98,7 @@ export function ProjectProgress({ task, subtasks, milestones }: ProjectProgressP
       {/* Mini stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <Stat icon={ListChecks} label="Subtasks" value={`${doneSub}/${totalSub}`} sub={inProgSub > 0 ? `${inProgSub} in progress` : 'done'} accent="text-sky-600" />
-        <Stat icon={Flag} label="Milestones" value={`${doneMs}/${sortedMs.length}`} sub={overdueMs > 0 ? `${overdueMs} overdue` : 'on schedule'} accent={overdueMs > 0 ? 'text-red-600' : 'text-violet-600'} />
+        <Stat icon={Flag} label="Milestones" value={`${doneMs}/${sortedMs.length}`} sub={overdueMs > 0 ? `${overdueMs} overdue` : 'on schedule'} accent={overdueMs > 0 ? 'text-red-600' : 'text-primary'} />
         <Stat icon={CalendarClock} label="Timeline" value={isTerminal ? 'Done' : daysLeft < 0 ? `${-daysLeft}d over` : `${daysLeft}d left`} sub={`due ${formatDate(task.due_date)}`} accent={!isTerminal && daysLeft < 0 ? 'text-red-600' : 'text-amber-600'} />
       </div>
 

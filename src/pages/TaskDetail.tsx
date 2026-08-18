@@ -175,7 +175,7 @@ export function TaskDetailPage() {
               </button>
             )}
             {perms.canCloseTask(task.status, currentUserId, task.assigned_by, isAdmin) && (
-              <button onClick={() => setCloseDialogOpen(true)} className="flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-xl bg-purple-600 text-white hover:bg-purple-700 shadow-lg hover:shadow-purple-200 transition-all">
+              <button onClick={() => setCloseDialogOpen(true)} className="flex items-center gap-2 px-6 py-3 text-base font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all">
                 <Lock className="h-5 w-5" /> Close Activity
               </button>
             )}
@@ -286,11 +286,11 @@ export function TaskDetailPage() {
 
         {/* Closure info */}
         {task.closed_at && (
-          <div className="mt-4 p-3 rounded-md bg-purple-50 border border-purple-200 text-sm">
-            <p className="font-medium text-purple-800">
+          <div className="mt-4 p-3 rounded-md bg-primary/5 border border-primary/20 text-sm">
+            <p className="font-medium text-primary">
               Closed: {formatDateTime(task.closed_at)} by {task.closed_by_user?.full_name || 'Unknown'}
             </p>
-            {task.closure_reason && <p className="text-purple-700 mt-1">{task.closure_reason}</p>}
+            {task.closure_reason && <p className="text-primary/80 mt-1">{task.closure_reason}</p>}
           </div>
         )}
 

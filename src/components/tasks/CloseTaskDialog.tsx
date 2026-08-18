@@ -39,7 +39,7 @@ export function CloseTaskDialog({
           </button>
         </div>
 
-        <div className="mx-6 mt-4 p-3 rounded-md bg-purple-50 border border-purple-200 flex items-center gap-2 text-sm text-purple-700">
+        <div className="mx-6 mt-4 p-3 rounded-md bg-primary/5 border border-primary/20 flex items-center gap-2 text-sm text-primary">
           <Lock className="h-4 w-4" />
           Closing <strong>{task.task_name}</strong> — this verifies the work is complete and signed off
         </div>
@@ -89,7 +89,7 @@ export function CloseTaskDialog({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {isSubmitting ? 'Closing...' : 'Close Task'}
             </button>

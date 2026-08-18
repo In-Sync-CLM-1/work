@@ -2,6 +2,7 @@ import { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
+import { PageHeader } from '@/components/PageHeader';
 
 // The charting library is ~600KB. Loading it lazily keeps it out of the bundle
 // every other page (and the public landing page) has to download.
@@ -25,6 +26,7 @@ export function DashboardPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <PageHeader title="Dashboard" description={`Task accountability across ${label === 'Task' ? 'your organisation' : label}`} />
       {hasDepartments && (
         <div className="inline-flex items-center gap-0.5 rounded-lg border border-border bg-card p-0.5 mb-4">
           <TeamTab label="All Teams" active={departmentId === null} onClick={() => setDepartmentId(null)} />

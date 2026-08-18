@@ -98,10 +98,10 @@ export function ProfilePage() {
         <motion.div variants={fadeUp} className="lg:col-span-2 space-y-5">
           {/* Header card */}
           <div className="rounded-xl border bg-card overflow-hidden">
-            <div className="h-24 bg-gradient-to-r from-violet-500 to-purple-600 relative">
+            <div className="h-24 brand-gradient relative">
               <div className="absolute -bottom-10 left-6">
                 <div className="h-20 w-20 rounded-2xl bg-white shadow-lg flex items-center justify-center border-4 border-white">
-                  <span className="text-2xl font-bold bg-gradient-to-br from-violet-500 to-purple-600 bg-clip-text text-transparent">
+                  <span className="text-2xl font-bold text-primary">
                     {getInitials(profile?.full_name || 'U')}
                   </span>
                 </div>
@@ -218,12 +218,12 @@ export function ProfilePage() {
 
         {/* Referral Card */}
         <motion.div variants={fadeUp} className="space-y-5">
-          <div className="rounded-xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-purple-50 p-5 overflow-hidden relative">
-            <div className="absolute -top-8 -right-8 h-24 w-24 bg-violet-500/5 rounded-full blur-2xl" />
+          <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-5 overflow-hidden relative">
+            <div className="absolute -top-8 -right-8 h-24 w-24 bg-primary/10 rounded-full blur-2xl" />
             <div className="relative">
               <div className="flex items-center gap-2 mb-3">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                  <Gift className="h-4 w-4 text-white" />
+                <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                  <Gift className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <h3 className="font-bold text-sm">Refer & Earn</h3>
               </div>
@@ -236,16 +236,16 @@ export function ProfilePage() {
               <div className="mb-3">
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Your Referral Code</label>
                 <div className="mt-1 flex items-center gap-2 bg-white rounded-lg border px-3 py-2">
-                  <code className="text-sm font-bold text-violet-700 flex-1 tracking-wide">{referralCode}</code>
+                  <code className="text-sm font-bold text-primary flex-1 tracking-wide">{referralCode}</code>
                   <button
                     onClick={handleCopyLink}
-                    className="p-1 rounded hover:bg-violet-50 transition-colors"
+                    className="p-1 rounded hover:bg-primary/10 transition-colors"
                     title="Copy referral link"
                   >
                     {copied ? (
                       <Check className="h-4 w-4 text-emerald-500" />
                     ) : (
-                      <Copy className="h-4 w-4 text-violet-500" />
+                      <Copy className="h-4 w-4 text-primary" />
                     )}
                   </button>
                 </div>
@@ -263,7 +263,7 @@ export function ProfilePage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleCopyLink}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-500 to-purple-600 text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
                 >
                   <Share2 className="h-3.5 w-3.5" />
                   Copy Link
@@ -299,7 +299,7 @@ export function ProfilePage() {
               </div>
               <div className="border-t pt-3">
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Earn <span className="font-semibold text-violet-600">₹500</span> for every organization that subscribes using your referral code.
+                  Earn <span className="font-semibold text-primary">₹500</span> for every organization that subscribes using your referral code.
                 </p>
               </div>
             </div>

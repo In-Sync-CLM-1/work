@@ -170,7 +170,7 @@ export function TaskCard({
             {perms.canCloseTask(task.status, currentUserId, task.assigned_by, isAdmin) && (
               <button
                 onClick={(e) => { e.stopPropagation(); onClose(task); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600 text-white hover:bg-purple-700 shadow-sm transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
               >
                 <Lock className="h-3.5 w-3.5" /> Close
               </button>

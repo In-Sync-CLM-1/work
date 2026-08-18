@@ -30,7 +30,7 @@ function getInitials(name: string) {
 }
 
 const AVATAR_GRADIENTS = [
-  'from-violet-500 to-purple-600',
+  'from-primary to-sky-600',
   'from-sky-500 to-blue-600',
   'from-emerald-500 to-green-600',
   'from-amber-500 to-orange-500',
@@ -103,9 +103,7 @@ export function PlatformUsers() {
       {/* Header */}
       <motion.div variants={fadeUp} className="mb-6">
         <h1 className="text-2xl font-bold">
-          <span className="bg-gradient-to-r from-sky-500 via-blue-500 to-violet-500 bg-clip-text text-transparent">
-            Platform Users
-          </span>
+          Platform Users
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Every user across {stats.orgsCount} organisation{stats.orgsCount === 1 ? '' : 's'}
@@ -142,7 +140,7 @@ export function PlatformUsers() {
           label="Org Admins"
           value={stats.admins}
           icon={ShieldCheck}
-          gradient="from-violet-500 to-fuchsia-600"
+          gradient="from-primary to-teal-700"
           active={roleFilter === 'admin'}
           onClick={() => { setRoleFilter('admin'); setStatusFilter('all'); setOrgFilter('all'); }}
         />

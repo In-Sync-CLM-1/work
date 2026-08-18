@@ -26,7 +26,7 @@ const METHOD_LABELS: Record<string, string> = {
   manual: 'Manual',
 };
 const PLAN_BADGE: Record<string, string> = {
-  team: 'bg-violet-100 text-violet-700',
+  team: 'bg-primary/10 text-primary',
   business: 'bg-emerald-100 text-emerald-700',
 };
 
@@ -121,10 +121,8 @@ export function PlatformBilling() {
       <motion.div variants={fadeUp} className="mb-6 flex items-end justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Wallet className="h-6 w-6 text-fuchsia-500" />
-            <span className="bg-gradient-to-r from-fuchsia-500 via-pink-500 to-rose-500 bg-clip-text text-transparent">
-              Platform Billing
-            </span>
+            <Wallet className="h-6 w-6 text-primary" />
+            Platform Billing
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Revenue, payments, and conversion across all organisations
@@ -139,7 +137,7 @@ export function PlatformBilling() {
       {/* Hero revenue card + KPIs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
         {/* Hero card */}
-        <motion.div variants={fadeUp} className="lg:col-span-1 relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 p-6 text-white shadow-xl">
+        <motion.div variants={fadeUp} className="lg:col-span-1 relative overflow-hidden rounded-2xl brand-gradient p-6 text-white shadow-xl">
           <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-12 -left-8 h-40 w-40 rounded-full bg-white/10 blur-3xl" />
           <div className="relative">
@@ -178,7 +176,7 @@ export function PlatformBilling() {
             label="Paying Orgs"
             value={summary.payingOrgs}
             icon={Building2}
-            gradient="from-violet-500 to-purple-600"
+            gradient="from-primary to-sky-600"
             onClick={() => { setPlanFilter('all'); setMethodFilter('all'); scrollToTable(); }}
           />
           <KpiCard
@@ -364,7 +362,7 @@ export function PlatformBilling() {
                   <td className="py-3 pl-4 text-xs text-muted-foreground whitespace-nowrap">{formatDate(p.createdAt)}</td>
                   <td className="py-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-white font-semibold text-[10px]">
+                      <div className="h-7 w-7 rounded-md bg-gradient-to-br from-primary to-sky-600 flex items-center justify-center text-white font-semibold text-[10px]">
                         {p.orgName.slice(0, 2).toUpperCase()}
                       </div>
                       <span className="font-medium">{p.orgName}</span>
