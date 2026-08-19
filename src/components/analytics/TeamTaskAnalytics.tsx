@@ -1,3 +1,4 @@
+// cache-bust: forces a new build hash to route around a poisoned CDN cache entry for this chunk
 import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarClock, FileBarChart2, ListChecks, Loader2, Table2, Trophy } from 'lucide-react';
