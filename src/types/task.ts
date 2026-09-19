@@ -110,6 +110,9 @@ export interface Task {
   recurrence: TaskRecurrence | null;
   recurrence_parent_id: string | null;
   brief_files: BriefFile[];
+  // Free-text id of a ticket/record this task originated from in another
+  // system (e.g. an IT-Helpdesk ticket number like "ITS-2026-0049").
+  source_ref: string | null;
   // Joined fields
   assigned_user?: Profile;
   assigned_by_user?: Profile;
