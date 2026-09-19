@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Calendar, Clock, User, Tag,
+  ArrowLeft, Calendar, Clock, User, Tag, ExternalLink,
   Play, CheckCircle, XCircle, Lock, RotateCcw, Edit, Trash2,
 } from 'lucide-react';
 import type { Task, CreateTaskInput, UpdateTaskInput, TaskAttachment, BriefFile } from '@/types/task';
@@ -261,6 +261,23 @@ export function TaskDetailPage() {
                   <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-muted">{tag}</span>
                 ))}
               </div>
+            </div>
+          )}
+          {task.source_ref && (
+            <div>
+              <span className="text-muted-foreground flex items-center gap-1"><ExternalLink className="h-3.5 w-3.5" /> Related Ticket</span>
+              {/^ITS-\d{4}-\d+$/.test(task.source_ref) ? (
+                <a
+                  href={`https://helpdesk.in-sync.co.in/tickets?q=${encodeURIComponent(task.source_ref)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium mt-0.5 text-primary hover:underline block"
+                >
+                  {task.source_ref}
+                </a>
+              ) : (
+                <p className="font-medium mt-0.5">{task.source_ref}</p>
+              )}
             </div>
           )}
         </div>
