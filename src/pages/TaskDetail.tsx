@@ -42,7 +42,7 @@ export function TaskDetailPage() {
   const { comments, isLoading: commentsLoading, addComment } = useTaskComments(id!);
   const { attachments, isLoading: attachmentsLoading, uploadAttachment, deleteAttachment, getDownloadUrl } = useTaskAttachments(id!);
   const { profiles } = useProfiles();
-  const { createTask: createSubtask } = useTasks({ page: 1, items_per_page: 1 });
+  const { createTask: createSubtask, deleteTask } = useTasks({ page: 1, items_per_page: 1 });
   const startTask = useStartTask();
   const completeTask = useCompleteTask();
   const { milestones, addMilestone, updateMilestone, deleteMilestone } = useMilestones(id!);
@@ -198,12 +198,17 @@ export function TaskDetailPage() {
             )}
             {perms.canDeleteTask(currentUserId, task.assigned_by, isAdmin) && (
               <button
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete this task?')) {
+                onClick={async () => {
+                  if (!confirm('Are you sure you want to delete this task?')) return;
+                  try {
+                    await deleteTask.mutateAsync(task.id);
                     navigate('/tasks');
+                  } catch {
+                    // Toasted by the mutation's onError; stay on the page.
                   }
                 }}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10"
+                disabled={deleteTask.isPending}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-50"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
