@@ -33,3 +33,8 @@ supabase/.temp/
 # Promo/video pipeline build output
 remotion-promo/out/
 remotion-promo/node_modules/
+
+# Walkthrough video pipeline (sessions/tokens + large media — never commit)
+scripts/.browser-profile/
+scripts/recordings/
+scripts/tts-payload.json
