@@ -204,7 +204,14 @@ Deno.serve(async (req) => {
       if (task) {
         orgId = task.org_id ?? orgId;
         taskName = task.task_name;
-        description = task.description || notification.message;
+        // The notification's own message is what actually happened (status
+        // changed, resolution notes, who commented) -- the task's static
+        // description is only a sane fallback when a notification somehow
+        // has no message of its own. Getting this backwards is why a status
+        // change or completion's WhatsApp message silently showed the
+        // original task description instead, with nothing indicating what
+        // changed.
+        description = notification.message || task.description || 'No details provided.';
         dueDate = formatDate(task.due_date);
 
         if (task.assigned_by) {
