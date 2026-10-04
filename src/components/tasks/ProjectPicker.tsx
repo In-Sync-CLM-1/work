@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import type { ProjectRef } from '@/types/task';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
 
 interface ProjectPickerProps {
   value: string | null;
   onChange: (projectId: string | null) => void;
-  projects: ProjectRef[];
   disabled?: boolean;
 }
 
@@ -14,24 +16,57 @@ function label(p: ProjectRef): string {
 }
 
 /**
- * Searchable project picker. An org can have hundreds of projects, so a plain
- * dropdown is unusable — this filters as you type on both number and name.
+ * Searchable project picker. An org has more projects than one read can return
+ * (the API caps a read at 1,000), so nothing is loaded up front: once the user
+ * types, the matches (number or name, up to 20) are fetched from the server.
  */
-export function ProjectPicker({ value, onChange, projects, disabled }: ProjectPickerProps) {
+export function ProjectPicker({ value, onChange, disabled }: ProjectPickerProps) {
+  const { orgId } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [term, setTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const selected = projects.find((p) => p.id === value) || null;
+  useEffect(() => {
+    const t = setTimeout(() => setTerm(query.trim()), 250);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = q
-      ? projects.filter((p) => label(p).toLowerCase().includes(q))
-      : projects;
-    // Long lists are a scroll hazard; the search box is the way through.
-    return list.slice(0, 50);
-  }, [projects, query]);
+  const { data: matches = [], isFetching } = useQuery<ProjectRef[]>({
+    queryKey: ['project-search', orgId, term],
+    enabled: !!orgId && open && term.length > 0,
+    placeholderData: keepPreviousData,
+    queryFn: async () => {
+      const safe = term.replace(/[,()*%\\"]/g, ' ').trim();
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, org_id, project_number, project_name, status')
+        .eq('org_id', orgId!)
+        .or(`project_number.ilike.*${safe}*,project_name.ilike.*${safe}*`)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as ProjectRef[];
+    },
+  });
+
+  // The chosen project's label, fetched by id so it shows without a search.
+  const { data: selected = null } = useQuery<ProjectRef | null>({
+    queryKey: ['project-by-id', value],
+    enabled: !!value,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, org_id, project_number, project_name, status')
+        .eq('id', value!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as ProjectRef | null;
+    },
+  });
+
+  const shown = term ? matches : [];
 
   // Close when clicking outside.
   useEffect(() => {
@@ -89,7 +124,7 @@ export function ProjectPicker({ value, onChange, projects, disabled }: ProjectPi
               No project
             </button>
 
-            {matches.map((p) => (
+            {shown.map((p) => (
               <button
                 key={p.id}
                 type="button"
@@ -101,8 +136,10 @@ export function ProjectPicker({ value, onChange, projects, disabled }: ProjectPi
               </button>
             ))}
 
-            {matches.length === 0 && (
-              <p className="px-3 py-2 text-sm text-muted-foreground">No project found.</p>
+            {shown.length === 0 && (
+              <p className="px-3 py-2 text-sm text-muted-foreground">
+                {!term ? 'Type a project name or number to search.' : isFetching ? 'Searching…' : 'No project found.'}
+              </p>
             )}
           </div>
         </div>
