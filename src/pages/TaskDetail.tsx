@@ -10,7 +10,6 @@ import { useAuth } from '@/lib/auth-context';
 import { useTaskDetail } from '@/hooks/useTaskDetail';
 import { useTaskComments } from '@/hooks/useTaskComments';
 import { useTaskAttachments } from '@/hooks/useTaskAttachments';
-import { useProfiles } from '@/hooks/useProfiles';
 import { useTasks } from '@/hooks/useTasks';
 import { useStartTask } from '@/hooks/useStartTask';
 import { useCompleteTask } from '@/hooks/useCompleteTask';
@@ -41,7 +40,6 @@ export function TaskDetailPage() {
   const { task, isLoading, updateTask, closeTask, restartTask, cancelTask } = useTaskDetail(id!);
   const { comments, isLoading: commentsLoading, addComment } = useTaskComments(id!);
   const { attachments, isLoading: attachmentsLoading, uploadAttachment, deleteAttachment, getDownloadUrl } = useTaskAttachments(id!);
-  const { profiles } = useProfiles();
   const { createTask: createSubtask, deleteTask } = useTasks({ page: 1, items_per_page: 1 });
   const startTask = useStartTask();
   const completeTask = useCompleteTask();
@@ -421,7 +419,6 @@ export function TaskDetailPage() {
         open={editDialogOpen}
         onOpenChange={(open) => { setEditDialogOpen(open); if (!open) setEditingSubtask(null); }}
         task={editingSubtask || task}
-        profiles={profiles}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         onSubmit={handleUpdate}
@@ -433,7 +430,6 @@ export function TaskDetailPage() {
           open={subtaskDialogOpen}
           onOpenChange={setSubtaskDialogOpen}
           parentTask={task}
-          profiles={profiles}
           onSubmit={async (data) => {
             setIsSubmitting(true);
             try {

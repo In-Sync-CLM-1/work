@@ -371,7 +371,6 @@ export function TasksPage() {
         open={taskDialogOpen}
         onOpenChange={(open) => { setTaskDialogOpen(open); if (!open) setEditingTask(null); }}
         task={editingTask}
-        profiles={profiles}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         onSubmit={handleCreateTask}
@@ -384,7 +383,6 @@ export function TasksPage() {
           open={!!subtaskParent}
           onOpenChange={(open) => { if (!open) setSubtaskParent(null); }}
           parentTask={subtaskParent}
-          profiles={profiles}
           onSubmit={handleCreateSubtask}
           isSubmitting={isSubmitting}
         />
