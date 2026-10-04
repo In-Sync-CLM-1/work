@@ -51,7 +51,7 @@ export function AssigneePicker({ value, valueName, onChange, className, placehol
 
   const { data: options = [], isFetching } = useQuery<Option[]>({
     queryKey: ['assignee-search', orgId, term],
-    enabled: open,
+    enabled: open && term.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async () => {
       let q = supabase
@@ -59,12 +59,10 @@ export function AssigneePicker({ value, valueName, onChange, className, placehol
         .select('id, full_name, email')
         .eq('is_active', true)
         .order('full_name', { ascending: true })
-        .limit(30);
+        .limit(20);
       if (orgId) q = q.eq('org_id', orgId);
-      if (term) {
-        const safe = term.replace(/[,()*%\\"]/g, ' ').trim();
-        if (safe) q = q.or(`full_name.ilike.*${safe}*,email.ilike.*${safe}*`);
-      }
+      const safe = term.replace(/[,()*%\\"]/g, ' ').trim();
+      if (safe) q = q.or(`full_name.ilike.*${safe}*,email.ilike.*${safe}*`);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Option[];
@@ -95,7 +93,7 @@ export function AssigneePicker({ value, valueName, onChange, className, placehol
       {open && (
         <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border border-input bg-background shadow-md">
           {options.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-muted-foreground">{isFetching ? 'Searching…' : 'No matching person'}</li>
+            <li className="px-3 py-2 text-sm text-muted-foreground">{!term ? 'Type a name to search' : isFetching ? 'Searching…' : 'No matching person'}</li>
           ) : (
             options.map((o) => (
               <li
