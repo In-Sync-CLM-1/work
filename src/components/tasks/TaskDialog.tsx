@@ -10,7 +10,6 @@ import type {
 } from '@/types/task';
 import { canReassignTask } from '@/lib/taskUtils';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
-import { useProjects } from '@/hooks/useProjects';
 import { ProjectPicker } from './ProjectPicker';
 import { BriefFilesField } from './BriefFilesField';
 import { AssigneePicker } from './AssigneePicker';
@@ -52,7 +51,6 @@ export function TaskDialog({
   const isEditing = !!task;
   const canReassign = task ? canReassignTask(currentUserId, task.assigned_by, isAdmin) : true;
   const { departments, hasDepartments } = useTaskDepartments();
-  const { projects } = useProjects();
 
   const [formData, setFormData] = useState({
     task_name: '',
@@ -198,7 +196,6 @@ export function TaskDialog({
                   <ProjectPicker
                     value={formData.project_id}
                     onChange={(project_id) => setFormData((p) => ({ ...p, project_id }))}
-                    projects={projects}
                   />
                 </div>
               </div>
