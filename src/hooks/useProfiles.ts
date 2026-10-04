@@ -14,20 +14,7 @@ export function useProfiles() {
       const PAGE = 1000;
       const all: Profile[] = [];
       for (let from = 0; ; from += PAGE) {
-        let query = supabase
-          .from('profiles')
-          .select('*')
-          .eq('is_active', true)
-          .order('full_name', { ascending: true })
-          .order('id', { ascending: true })
-          .range(from, from + PAGE - 1);
-
-        // Scope to the organisation being worked in. Without this a platform
-        // admin, who may read every organisation, would get every tenant's
-        // people offered as assignees.
-        if (orgId) query = query.eq('org_id', orgId);
-
-        const { data, error } = await query;
+        const { data, error } = await supabase.rpc('org_members', { p_term: null, p_limit: PAGE, p_offset: from });
         if (error) throw error;
         all.push(...(data as Profile[]));
         if (!data || data.length < PAGE) break;

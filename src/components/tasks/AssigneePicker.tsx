@@ -54,16 +54,9 @@ export function AssigneePicker({ value, valueName, onChange, className, placehol
     enabled: open && term.length > 0,
     placeholderData: keepPreviousData,
     queryFn: async () => {
-      let q = supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .eq('is_active', true)
-        .order('full_name', { ascending: true })
-        .limit(20);
-      if (orgId) q = q.eq('org_id', orgId);
-      const safe = term.replace(/[,()*%\\"]/g, ' ').trim();
-      if (safe) q = q.or(`full_name.ilike.*${safe}*,email.ilike.*${safe}*`);
-      const { data, error } = await q;
+      // Server-side member search for the organisation being worked in
+      // (everyone with a role there, whichever org they last switched to).
+      const { data, error } = await supabase.rpc('org_members', { p_term: term, p_limit: 20, p_offset: 0 });
       if (error) throw error;
       return (data ?? []) as Option[];
     },
