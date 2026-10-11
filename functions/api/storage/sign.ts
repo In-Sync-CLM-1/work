@@ -2,12 +2,12 @@
 //
 // Lets a private object be opened in a new tab or used as a download href
 // without attaching the session. Caller must already be authenticated.
-import { Env, corsHeaders, hmacHex, isAuthorized, jsonResponse } from './_shared';
+import { Env, corsHeaders, extractJwt, hmacHex, isAuthorized, jsonResponse, logAccess } from './_shared';
 
 export const onRequestOptions: PagesFunction<Env> = () =>
   new Response(null, { headers: corsHeaders() });
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   if (!(await isAuthorized(env, request))) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
@@ -26,6 +26,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const expiresIn = Math.min(Math.max(Number(body.expiresIn) || 3600, 60), 60 * 60 * 24 * 365);
   const exp = Date.now() + expiresIn * 1000;
   const sig = await hmacHex(env, `${key}:${exp}`);
+  logAccess({ waitUntil }, env, extractJwt(request), "file_link", key, { expiresIn });
   const origin = new URL(request.url).origin;
 
   return new Response(
