@@ -6,8 +6,10 @@
 import {
   Env,
   corsHeaders,
+  extractJwt,
   isAuthorized,
   jsonResponse,
+  logAccess,
   sanitizeBucket,
   sanitizePath,
 } from './_shared';
@@ -17,7 +19,7 @@ const MAX_BYTES = 50 * 1024 * 1024; // 50MB
 export const onRequestOptions: PagesFunction<Env> = () =>
   new Response(null, { headers: corsHeaders() });
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
   if (!(await isAuthorized(env, request))) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
@@ -49,6 +51,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const message = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: `R2 upload failed: ${message}` }, 500);
   }
+
+  logAccess({ waitUntil }, env, extractJwt(request), "file_upload", key, { bytes: contentLength, contentType });
 
   const origin = new URL(request.url).origin;
   return new Response(
