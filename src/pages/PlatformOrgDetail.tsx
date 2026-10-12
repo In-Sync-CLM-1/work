@@ -19,6 +19,7 @@ import {
 import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
 import { fmtINR } from '@/lib/pricing';
 import { cn } from '@/lib/utils';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -153,7 +154,7 @@ export function PlatformOrgDetail() {
   const { id: orgId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, error } = useOrgDetail(orgId ?? null);
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useUrlState<Tab>('tab', 'overview');
   const [manageOpen, setManageOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 

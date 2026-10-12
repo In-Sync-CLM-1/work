@@ -6,6 +6,7 @@ import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
+import { useUrlState } from '@/hooks/useUrlState';
 
 async function extractFunctionError(err: unknown): Promise<string> {
   if (err instanceof FunctionsHttpError) {
@@ -32,7 +33,7 @@ export function UserManagementPage() {
   const { profile, orgId } = useAuth();
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useUrlState('q', '');
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);

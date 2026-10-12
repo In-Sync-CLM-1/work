@@ -22,6 +22,7 @@ import { CompleteTaskDialog } from '@/components/tasks/CompleteTaskDialog';
 import { CloseTaskDialog } from '@/components/tasks/CloseTaskDialog';
 import { RestartTaskDialog } from '@/components/tasks/RestartTaskDialog';
 import { PaginationControls } from '@/components/tasks/PaginationControls';
+import { useUrlObjectState } from '@/hooks/useUrlState';
 
 export function TasksPage() {
   const navigate = useNavigate();
@@ -41,18 +42,51 @@ export function TasksPage() {
     { status: 'all', priority: 'all', items_per_page: 10, page: 1 },
   );
 
+  // Search, assignee, date ranges and tags live in the address so they survive Back and refresh.
+  const [urlFilters, setUrlFilters] = useUrlObjectState('tf', {
+    search: '',
+    assigned_to: '',
+    due_date_from: '',
+    due_date_to: '',
+    created_date_from: '',
+    created_date_to: '',
+    tags: [] as string[],
+  });
+
   const [filters, setFilters] = useState<TaskFiltersType>({
     status: (searchParams.get('status') as TaskFiltersType['status']) || sticky.status || 'all',
     priority: sticky.priority || 'all',
     page: sticky.page || 1,
     items_per_page: sticky.items_per_page || 10,
+    search: urlFilters.search || undefined,
+    assigned_to: urlFilters.assigned_to || undefined,
+    due_date_from: urlFilters.due_date_from || undefined,
+    due_date_to: urlFilters.due_date_to || undefined,
+    created_date_from: urlFilters.created_date_from || undefined,
+    created_date_to: urlFilters.created_date_to || undefined,
+    tags: urlFilters.tags.length ? urlFilters.tags : undefined,
   });
 
-  // Sync filters when URL status param changes (e.g. sidebar click)
+  // Mirror the persisted filters into the address whenever they change.
   useEffect(() => {
-    const urlStatus = (searchParams.get('status') as TaskFiltersType['status']) || 'all';
+    setUrlFilters({
+      search: filters.search ?? '',
+      assigned_to: filters.assigned_to ?? '',
+      due_date_from: filters.due_date_from ?? '',
+      due_date_to: filters.due_date_to ?? '',
+      created_date_from: filters.created_date_from ?? '',
+      created_date_to: filters.created_date_to ?? '',
+      tags: filters.tags ?? [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.assigned_to, filters.due_date_from, filters.due_date_to, filters.created_date_from, filters.created_date_to, filters.tags]);
+
+  // Sync filters when URL status param changes (e.g. sidebar click)
+  const urlStatusParam = searchParams.get('status');
+  useEffect(() => {
+    const urlStatus = (urlStatusParam as TaskFiltersType['status']) || 'all';
     setFilters((prev) => ({ ...prev, status: urlStatus, page: 1 }));
-  }, [searchParams]);
+  }, [urlStatusParam]);
 
   // Re-scope when moving between department lists.
   useEffect(() => {

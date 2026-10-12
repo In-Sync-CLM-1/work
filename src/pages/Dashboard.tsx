@@ -1,8 +1,9 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
 import { PageHeader } from '@/components/PageHeader';
+import { useUrlState } from '@/hooks/useUrlState';
 
 // The charting library is ~600KB. Loading it lazily keeps it out of the bundle
 // every other page (and the public landing page) has to download.
@@ -19,7 +20,9 @@ const TeamTaskAnalytics = lazy(() =>
  */
 export function DashboardPage() {
   const { departments, hasDepartments } = useTaskDepartments();
-  const [departmentId, setDepartmentId] = useState<string | null>(null);
+  const [departmentKey, setDepartmentKey] = useUrlState('team', '');
+  const departmentId = departmentKey || null;
+  const setDepartmentId = (id: string | null) => setDepartmentKey(id ?? '');
 
   const active = departments.find((d) => d.id === departmentId);
   const label = active ? active.label : hasDepartments ? 'All Teams' : 'Task';
