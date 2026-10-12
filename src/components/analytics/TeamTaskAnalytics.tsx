@@ -7,7 +7,7 @@ import { vizTokens, STATUS_LABELS } from '@/lib/vizPalette';
 import { useTeamTaskAnalytics } from '@/hooks/useTeamTaskAnalytics';
 import { EChart } from './EChart';
 import { StatTile } from './StatTile';
-import { AnalyticsDateFilter, defaultAnalyticsRange, type AnalyticsRange } from './AnalyticsDateFilter';
+import { AnalyticsDateFilter, useUrlAnalyticsRange } from './AnalyticsDateFilter';
 import {
   assigneeWorkloadOption,
   milestoneDonutOption,
@@ -44,7 +44,7 @@ function Panel({ title, extra, children }: { title: string; extra?: React.ReactN
  * today" panels, which say so in their own titles.
  */
 export function TeamTaskAnalytics({ departmentId, teamLabel }: Props) {
-  const [range, setRange] = useState<AnalyticsRange>(defaultAnalyticsRange);
+  const [range, setRange] = useUrlAnalyticsRange();
   const [showTable, setShowTable] = useState(false);
   const { theme } = useTheme();
   const v = useMemo(() => vizTokens(theme === 'dark'), [theme]);
