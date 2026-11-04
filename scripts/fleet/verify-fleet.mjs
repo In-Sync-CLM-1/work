@@ -6,13 +6,13 @@ import { project } from './lib-fleet.mjs';
 const APPS = [
   { name: 'work',               pointer: ['profiles', 'org_id'],    data: 'tasks',                 tenants: 'organizations' },
   { name: 'globalcrm',          pointer: ['profiles', 'org_id'],    data: 'contacts',              tenants: 'organizations' },
-  { name: 'vendorverification', pointer: ['profiles', 'tenant_id'], data: 'vendors',               tenants: 'tenants' },
+  { name: 'vendor',             pointer: ['profiles', 'tenant_id'], data: 'vendors',               tenants: 'tenants' },
   { name: 'expense',            pointer: ['profiles', 'active_org_id'], data: 'travel_expense_claims', tenants: 'organizations' },
   { name: 'crm',                pointer: ['profiles', 'org_id'],    data: 'contacts',              tenants: 'organizations' },
 ];
 
-const tenantCol = (app) => (app.name === 'vendorverification' ? 'tenant_id' : 'org_id');
-const userCol = (app) => (app.name === 'vendorverification' ? 'user_id' : 'id');
+const tenantCol = (app) => (app.name === 'vendor' ? 'tenant_id' : 'org_id');
+const userCol = (app) => (app.name === 'vendor' ? 'user_id' : 'id');
 
 for (const app of APPS) {
   let p;
