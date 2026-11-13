@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/select';
 import { usePlatformUsers, useToggleUserActive } from '@/hooks/usePlatformUsers';
 import { APP_ROLES, getRoleBadgeColor } from '@/types/user';
 import { cn } from '@/lib/utils';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -47,10 +48,10 @@ function avatarGradient(name: string) {
 export function PlatformUsers() {
   const { data: users = [], isLoading } = usePlatformUsers();
   const toggleActive = useToggleUserActive();
-  const [search, setSearch] = useState('');
-  const [orgFilter, setOrgFilter] = useState<string>('all');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useUrlState('q', '');
+  const [orgFilter, setOrgFilter] = useUrlState<string>('org', 'all');
+  const [roleFilter, setRoleFilter] = useUrlState<string>('role', 'all');
+  const [statusFilter, setStatusFilter] = useUrlState<string>('status', 'all');
 
   const orgs = useMemo(() => {
     const map = new Map<string, string>();

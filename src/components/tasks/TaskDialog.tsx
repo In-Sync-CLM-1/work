@@ -7,13 +7,13 @@ import type {
   UpdateTaskInput,
   TaskPriority,
   TaskRecurrence,
-  Profile,
 } from '@/types/task';
 import { canReassignTask } from '@/lib/taskUtils';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
 import { useProjects } from '@/hooks/useProjects';
 import { ProjectPicker } from './ProjectPicker';
 import { BriefFilesField } from './BriefFilesField';
+import { AssigneePicker } from './AssigneePicker';
 
 const RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
   daily: 'Daily',
@@ -31,7 +31,6 @@ interface TaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task?: Task | null;
-  profiles: Profile[];
   currentUserId: string;
   isAdmin: boolean;
   onSubmit: (data: CreateTaskInput | UpdateTaskInput) => void;
@@ -44,7 +43,6 @@ export function TaskDialog({
   open,
   onOpenChange,
   task,
-  profiles,
   currentUserId,
   isAdmin,
   onSubmit,
@@ -268,19 +266,12 @@ export function TaskDialog({
                   <span className="text-xs ml-auto">Only the task creator can reassign</span>
                 </div>
               ) : (
-                <select
-                  required
+                <AssigneePicker
                   value={formData.assigned_to}
-                  onChange={(e) => set('assigned_to', e.target.value)}
+                  valueName={task?.assigned_user?.full_name}
+                  onChange={(id) => set('assigned_to', id)}
                   className={inputCls}
-                >
-                  <option value="">Select team member</option>
-                  {profiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.full_name}
-                    </option>
-                  ))}
-                </select>
+                />
               )}
             </div>
 

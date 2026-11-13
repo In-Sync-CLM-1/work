@@ -80,7 +80,7 @@ export function TaskComments({ comments, isLoading, onAddComment, isSubmitting }
                   )}
                 </div>
                 <p className={cn(
-                  'text-sm mt-0.5',
+                  'text-sm mt-0.5 whitespace-pre-wrap break-words',
                   isSystem && 'italic text-muted-foreground'
                 )}>
                   {comment.comment}

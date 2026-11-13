@@ -1,12 +1,12 @@
+import { AssigneePicker } from './AssigneePicker';
 import { useState } from 'react';
 import { X, GitBranch } from 'lucide-react';
-import type { Task, CreateTaskInput, TaskPriority, Profile } from '@/types/task';
+import type { Task, CreateTaskInput, TaskPriority } from '@/types/task';
 
 interface SubtaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   parentTask: Task;
-  profiles: Profile[];
   onSubmit: (data: CreateTaskInput) => void;
   isSubmitting: boolean;
 }
@@ -15,7 +15,6 @@ export function SubtaskDialog({
   open,
   onOpenChange,
   parentTask,
-  profiles,
   onSubmit,
   isSubmitting,
 }: SubtaskDialogProps) {
@@ -91,17 +90,11 @@ export function SubtaskDialog({
 
           <div>
             <label className="text-sm font-medium">Assign To *</label>
-            <select
-              required
+            <AssigneePicker
               value={formData.assigned_to}
-              onChange={(e) => setFormData((p) => ({ ...p, assigned_to: e.target.value }))}
+              onChange={(id) => setFormData((p) => ({ ...p, assigned_to: id }))}
               className="mt-1 w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select assignee</option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>{p.full_name}</option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

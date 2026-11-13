@@ -6,8 +6,10 @@
 import {
   Env,
   corsHeaders,
+  extractJwt,
   isAuthorized,
   jsonResponse,
+  logAccess,
   verifySignedKey,
 } from '../_shared';
 
@@ -28,7 +30,7 @@ function keyFromRequest(request: Request): string {
   }
 }
 
-export const onRequestGet: PagesFunction<Env, 'key'> = async ({ request, env }) => {
+export const onRequestGet: PagesFunction<Env, 'key'> = async ({ request, env, waitUntil }) => {
   const key = keyFromRequest(request);
   if (!key) return jsonResponse({ error: 'Not found' }, 404);
 
@@ -44,6 +46,7 @@ export const onRequestGet: PagesFunction<Env, 'key'> = async ({ request, env }) 
     if (!signed && !(await isAuthorized(env, request))) {
       return jsonResponse({ error: 'Unauthorized' }, 401);
     }
+    logAccess({ waitUntil }, env, extractJwt(request), 'file_download', key);
   }
 
   const obj = await env.TASK_FILES.get(key);
@@ -58,7 +61,7 @@ export const onRequestGet: PagesFunction<Env, 'key'> = async ({ request, env }) 
   return new Response(obj.body, { headers });
 };
 
-export const onRequestDelete: PagesFunction<Env, 'key'> = async ({ request, env }) => {
+export const onRequestDelete: PagesFunction<Env, 'key'> = async ({ request, env, waitUntil }) => {
   if (!(await isAuthorized(env, request))) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
@@ -66,6 +69,7 @@ export const onRequestDelete: PagesFunction<Env, 'key'> = async ({ request, env 
   const key = keyFromRequest(request);
   if (!key) return jsonResponse({ error: 'Not found' }, 404);
 
+  logAccess({ waitUntil }, env, extractJwt(request), 'file_delete', key);
   await env.TASK_FILES.delete(key).catch(() => {});
   return new Response(null, { status: 204, headers: corsHeaders() });
 };

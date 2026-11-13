@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Calendar as CalendarIcon, Check, ChevronDown } from 'lucide-react';
-import { subDays, startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+import { subDays, startOfMonth, endOfMonth, subMonths, format, parseISO, isValid } from 'date-fns';
+import { useUrlState } from '@/hooks/useUrlState';
 
 export interface AnalyticsRange {
   from: Date | null; // null = all time
@@ -36,6 +37,34 @@ const PRESETS: { label: string; make: () => AnalyticsRange }[] = [
   { label: 'This financial year', make: () => ({ from: fyStart(now()), to: now(), label: 'This financial year' }) },
   { label: 'All time', make: () => ({ from: null, to: null, label: 'All time' }) },
 ];
+
+/**
+ * URL-backed analytics range (?range=Last 30 days, or ?range=custom~2026-01-01~2026-02-01),
+ * so the chosen period survives Back and refresh.
+ */
+export function useUrlAnalyticsRange(): [AnalyticsRange, (r: AnalyticsRange) => void] {
+  const defaultLabel = defaultAnalyticsRange().label;
+  const [key, setKey] = useUrlState('range', defaultLabel);
+  const range = useMemo<AnalyticsRange>(() => {
+    const preset = PRESETS.find((p) => p.label === key);
+    if (preset) return preset.make();
+    if (key.startsWith('custom~')) {
+      const [, f, t] = key.split('~');
+      const from = parseISO(f);
+      const to = parseISO(t);
+      if (isValid(from) && isValid(to)) {
+        return { from, to, label: format(from, 'd MMM yy') + ' – ' + format(to, 'd MMM yy') };
+      }
+    }
+    return defaultAnalyticsRange();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  const setRange = (r: AnalyticsRange) => {
+    if (PRESETS.some((p) => p.label === r.label)) setKey(r.label);
+    else if (r.from && r.to) setKey('custom~' + format(r.from, 'yyyy-MM-dd') + '~' + format(r.to, 'yyyy-MM-dd'));
+  };
+  return [range, setRange];
+}
 
 interface Props {
   value: AnalyticsRange;

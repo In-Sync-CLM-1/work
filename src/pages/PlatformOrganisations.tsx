@@ -16,6 +16,7 @@ import { OrgManagementModal } from '@/components/platform/OrgManagementModal';
 import { usePlatformOrgs, useDeleteOrg } from '@/hooks/usePlatformOrgs';
 import type { PlatformOrgRow } from '@/hooks/usePlatformOrgs';
 import type { OrgRow } from '@/hooks/usePlatformDashboard';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -173,9 +174,9 @@ function DeleteOrgDialog({ org, open, onClose }: DeleteDialogProps) {
 export function PlatformOrganisations() {
   const navigate = useNavigate();
   const { data: orgs = [], isLoading } = usePlatformOrgs();
-  const [search, setSearch] = useState('');
-  const [planFilter, setPlanFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = useUrlState('q', '');
+  const [planFilter, setPlanFilter] = useUrlState<string>('plan', 'all');
+  const [statusFilter, setStatusFilter] = useUrlState<string>('status', 'all');
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [managingOrg, setManagingOrg] = useState<PlatformOrgRow | null>(null);

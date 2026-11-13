@@ -56,6 +56,27 @@ export function isServiceRoleJwt(env: Env, jwt: string): boolean {
   return !!jwt && !!env.SUPABASE_SERVICE_ROLE_KEY && jwt === env.SUPABASE_SERVICE_ROLE_KEY;
 }
 
+// Records a user action in the permanent activity ledger. Runs as the caller (their
+// own session token), so the ledger knows who did it. Never blocks or fails the
+// request; service-role (system) calls and signed links without a session are not logged.
+export function logAccess(
+  ctx: { waitUntil: (p: Promise<unknown>) => void },
+  env: Env,
+  jwt: string,
+  event: "file_upload" | "file_download" | "file_delete" | "file_link",
+  target: string,
+  details: Record<string, unknown> = {},
+): void {
+  if (!jwt || isServiceRoleJwt(env, jwt)) return;
+  ctx.waitUntil(
+    fetch(`${env.SUPABASE_URL}/rest/v1/rpc/ledger_log_access`, {
+      method: "POST",
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${jwt}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_event: event, p_target: target, p_details: details }),
+    }).catch(() => {}),
+  );
+}
+
 export async function isAuthorized(env: Env, request: Request): Promise<boolean> {
   const jwt = extractJwt(request);
   return isServiceRoleJwt(env, jwt) || !!(await getUserFromJwt(env, jwt));

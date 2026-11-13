@@ -20,6 +20,7 @@ import { PlatformOrgDetail } from '@/pages/PlatformOrgDetail';
 import { PlatformUsers } from '@/pages/PlatformUsers';
 import { PlatformBilling } from '@/pages/PlatformBilling';
 import Demo from '@/pages/Demo';
+import { LedgerAccessTrail } from "./lib/LedgerAccessTrail";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -146,6 +147,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <LedgerAccessTrail />
           <AuthProvider>
             <AppRoutes />
             <Toaster position="top-right" richColors />

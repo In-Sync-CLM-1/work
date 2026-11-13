@@ -24,7 +24,7 @@ weaken it, the change is wrong regardless of how convenient it is.
 
 ## Two sound mechanisms — both satisfy the invariant
 
-**Pointer-resolved** — used by Work-Sync, GlobalCRM, Vendor-Sync.
+**Pointer-resolved** — used by Work-Sync, GlobalCRM, Vendorsync.
 RLS reads an ambient pointer (`profiles.org_id`, `profiles.tenant_id`) through a
 helper like `auth_user_org_id()`. Queries stay simple because the organisation
 is implicit.

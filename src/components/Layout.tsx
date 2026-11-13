@@ -24,7 +24,7 @@ const platformLinks = [
   { label: 'WhatsApp Broadcast', href: 'https://wa.in-sync.co.in/', icon: MessageCircle, color: 'text-emerald-400' },
   { label: 'Email Broadcast', href: 'https://email.in-sync.co.in/', icon: Mail, color: 'text-sky-400' },
   { label: 'Field Team Tracking', href: 'https://field.in-sync.co.in/', icon: MapPin, color: 'text-orange-400' },
-  { label: 'Vendor Verification', href: 'https://vendorverification.in-sync.co.in/', icon: ShieldCheck, color: 'text-violet-400' },
+  { label: 'Vendorsync', href: 'https://vendor.in-sync.co.in/', icon: ShieldCheck, color: 'text-violet-400' },
   { label: 'Event Management', href: 'https://event.in-sync.co.in/', icon: Calendar, color: 'text-pink-400' },
   { label: 'Global CRM', href: 'https://globalcrm.in-sync.co.in/', icon: Headphones, color: 'text-cyan-400' },
   { label: 'Applicant Tracking', href: 'https://ats.in-sync.co.in/', icon: UserCheck, color: 'text-amber-400' },

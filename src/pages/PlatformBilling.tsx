@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   IndianRupee, TrendingUp, Receipt, Download, Search, CreditCard, Building2,
@@ -13,6 +13,7 @@ import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { usePlatformBilling } from '@/hooks/usePlatformBilling';
 import { cn } from '@/lib/utils';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const fadeUp = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
@@ -65,9 +66,9 @@ function exportCsv(rows: Record<string, unknown>[], filename: string) {
 
 export function PlatformBilling() {
   const { data, isLoading } = usePlatformBilling();
-  const [search, setSearch] = useState('');
-  const [methodFilter, setMethodFilter] = useState<string>('all');
-  const [planFilter, setPlanFilter] = useState<string>('all');
+  const [search, setSearch] = useUrlState('q', '');
+  const [methodFilter, setMethodFilter] = useUrlState<string>('method', 'all');
+  const [planFilter, setPlanFilter] = useUrlState<string>('plan', 'all');
   const tableRef = useRef<HTMLDivElement>(null);
 
   const scrollToTable = () => {

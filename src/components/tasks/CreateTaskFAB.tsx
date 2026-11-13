@@ -4,7 +4,6 @@ import { Plus } from 'lucide-react';
 import type { CreateTaskInput, UpdateTaskInput } from '@/types/task';
 import { useAuth } from '@/lib/auth-context';
 import { useTasks } from '@/hooks/useTasks';
-import { useProfiles } from '@/hooks/useProfiles';
 import { useTaskDepartments } from '@/hooks/useTaskDepartments';
 import { TaskDialog } from './TaskDialog';
 
@@ -17,7 +16,6 @@ export function CreateTaskFAB() {
   const location = useLocation();
   const departmentRoute = useMatch('/tasks/d/:key');
   const { user, isAdmin, orgId } = useAuth();
-  const { profiles } = useProfiles();
   const { byKey, hasDepartments } = useTaskDepartments();
   const { createTask } = useTasks({ page: 1, items_per_page: 1 });
   const [open, setOpen] = useState(false);
@@ -58,7 +56,6 @@ export function CreateTaskFAB() {
         <TaskDialog
           open={open}
           onOpenChange={setOpen}
-          profiles={profiles}
           currentUserId={user.id}
           isAdmin={isAdmin}
           onSubmit={handleSubmit}

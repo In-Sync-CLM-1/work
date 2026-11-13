@@ -10,7 +10,6 @@ import { useAuth } from '@/lib/auth-context';
 import { useTaskDetail } from '@/hooks/useTaskDetail';
 import { useTaskComments } from '@/hooks/useTaskComments';
 import { useTaskAttachments } from '@/hooks/useTaskAttachments';
-import { useProfiles } from '@/hooks/useProfiles';
 import { useTasks } from '@/hooks/useTasks';
 import { useStartTask } from '@/hooks/useStartTask';
 import { useCompleteTask } from '@/hooks/useCompleteTask';
@@ -41,7 +40,6 @@ export function TaskDetailPage() {
   const { task, isLoading, updateTask, closeTask, restartTask, cancelTask } = useTaskDetail(id!);
   const { comments, isLoading: commentsLoading, addComment } = useTaskComments(id!);
   const { attachments, isLoading: attachmentsLoading, uploadAttachment, deleteAttachment, getDownloadUrl } = useTaskAttachments(id!);
-  const { profiles } = useProfiles();
   const { createTask: createSubtask, deleteTask } = useTasks({ page: 1, items_per_page: 1 });
   const startTask = useStartTask();
   const completeTask = useCompleteTask();
@@ -304,7 +302,7 @@ export function TaskDetailPage() {
         {task.completed_at && (
           <div className="mt-4 p-3 rounded-md bg-green-50 border border-green-200 text-sm">
             <p className="font-medium text-green-800">Completed: {formatDateTime(task.completed_at)}</p>
-            {task.completion_notes && <p className="text-green-700 mt-1">{task.completion_notes}</p>}
+            {task.completion_notes && <p className="text-green-700 mt-1 whitespace-pre-wrap break-words">{task.completion_notes}</p>}
           </div>
         )}
 
@@ -421,7 +419,6 @@ export function TaskDetailPage() {
         open={editDialogOpen}
         onOpenChange={(open) => { setEditDialogOpen(open); if (!open) setEditingSubtask(null); }}
         task={editingSubtask || task}
-        profiles={profiles}
         currentUserId={currentUserId}
         isAdmin={isAdmin}
         onSubmit={handleUpdate}
@@ -433,7 +430,6 @@ export function TaskDetailPage() {
           open={subtaskDialogOpen}
           onOpenChange={setSubtaskDialogOpen}
           parentTask={task}
-          profiles={profiles}
           onSubmit={async (data) => {
             setIsSubmitting(true);
             try {
