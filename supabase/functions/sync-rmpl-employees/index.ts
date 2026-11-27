@@ -1,13 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Keeps the Redefine Marcom org's membership in step with RMPL, the fleet's
-// identity source (reference_fleet_sso.md). The SSO launcher deliberately
-// never creates an account on login ("accounts must already exist") — this
-// scheduled sync is what keeps that true as RMPL onboards new employees; the
-// one-time batch (2026-08-14, 105 employees) only covered a snapshot. Runs
-// via cron-worker, mirroring sync-rmpl-projects. Additive only: never edits
-// or deactivates anyone already a member of the org.
+// Keeps the Redefine Marcom org in step with RMPL, the fleet's identity
+// source. RMPL calls this the moment a person is added, edited or exited
+// (database trigger on RMPL profiles); cron-worker also runs it every 15 min
+// as a safety net. Each run is a full reconcile:
+//   1. Active RMPL employees missing here get an account + org role.
+//   2. Everyone's manager (reports_to) and department follow RMPL.
+//   3. People RMPL has exited lose access: profile and org role go inactive
+//      and the login is blocked. If RMPL makes them active again, the block
+//      this sync put on is lifted.
 
 interface RmplEmployee {
   id: string;
@@ -21,7 +23,12 @@ interface RmplEmployee {
 interface WorkProfile {
   id: string;
   email: string;
+  reports_to: string | null;
+  department: string | null;
+  is_active: boolean | null;
 }
+
+const EXIT_BAN = '876000h'; // ~100 years
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -53,7 +60,6 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Redefine Marcom is the only org RMPL employees land in.
     const { data: org, error: orgErr } = await admin
       .from('organizations')
       .select('id')
@@ -73,49 +79,39 @@ Deno.serve(async (req) => {
       return json({ error: `RMPL fetch failed: ${rmplRes.status} ${text}` }, 502);
     }
     const rmplJson = await rmplRes.json();
-    const employees: RmplEmployee[] = rmplJson.data ?? [];
+    const employees: RmplEmployee[] = (rmplJson.data ?? []).filter((e: RmplEmployee) => !!e.email);
+    // Older RMPL builds don't send `exited`; then nobody is closed this run.
+    const exitedEmails: string[] = Array.isArray(rmplJson.exited) ? rmplJson.exited : [];
     const byRmplId = new Map(employees.map((e) => [e.id, e]));
 
-    // Match by email against whatever profile already exists here (e.g. the
-    // 2026-08-14 batch), so a returning name is reused rather than
-    // duplicated. Emails aren't consistently cased between the two apps, so
-    // match on the domain set instead of an exact-cased `.in()` list.
     const domainOr = RMPL_EMAIL_DOMAINS.map((d) => `email.ilike.%@${d}`).join(',');
     const { data: existingProfiles, error: profErr } = await admin
       .from('profiles')
-      .select('id, email')
+      .select('id, email, reports_to, department, is_active')
       .or(domainOr);
     if (profErr) throw profErr;
-    const workIdByEmail = new Map(
-      ((existingProfiles ?? []) as WorkProfile[]).map((p) => [p.email.toLowerCase(), p.id]),
+    const profileByEmail = new Map(
+      ((existingProfiles ?? []) as WorkProfile[]).map((p) => [p.email.toLowerCase(), p]),
     );
+    const workIdByEmail = new Map([...profileByEmail.entries()].map(([e, p]) => [e, p.id]));
 
-    const { data: existingRoles, error: roleErr } = await admin
+    const { data: roleRows, error: roleErr } = await admin
       .from('user_roles')
-      .select('user_id')
-      .eq('org_id', org.id)
-      .eq('is_active', true);
+      .select('user_id, is_active')
+      .eq('org_id', org.id);
     if (roleErr) throw roleErr;
-    const memberIds = new Set((existingRoles ?? []).map((r) => r.user_id as string));
-
-    const missing = employees.filter((e) => {
-      const id = workIdByEmail.get(e.email.toLowerCase());
-      return !id || !memberIds.has(id);
-    });
-
-    if (missing.length === 0) {
-      return json({ success: true, checked: employees.length, created: [], skipped: employees.length });
-    }
+    const roleActiveByUser = new Map((roleRows ?? []).map((r) => [r.user_id as string, !!r.is_active]));
 
     const created: string[] = [];
+    const managersUpdated: string[] = [];
+    const deactivated: string[] = [];
+    const reactivated: string[] = [];
     const errors: { email: string; error: string }[] = [];
 
-    // Phase 1: make sure every missing employee has an auth user + profile,
-    // so phase 2 can resolve manager chains even between two people who are
-    // both new this run.
-    for (const emp of missing) {
+    // ── 1. Create missing active employees ─────────────────────────────
+    for (const emp of employees) {
       const email = emp.email.toLowerCase();
-      if (workIdByEmail.has(email)) continue; // profile exists, only the org role is missing
+      if (workIdByEmail.has(email)) continue;
 
       const { data: userData, error: createErr } = await admin.auth.admin.createUser({
         email: emp.email,
@@ -125,9 +121,6 @@ Deno.serve(async (req) => {
       });
       let userId = userData?.user?.id;
       if (createErr || !userId) {
-        // An auth user can already exist without a matching profiles row
-        // (e.g. a prior run's profile upsert failed after createUser
-        // succeeded) — recover it by email instead of retrying forever.
         if (createErr?.message?.toLowerCase().includes('already been registered')) {
           const lookup = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
           userId = lookup.data?.users?.find((u) => u.email?.toLowerCase() === email)?.id;
@@ -153,57 +146,97 @@ Deno.serve(async (req) => {
         );
       if (profileErr) {
         errors.push({ email: emp.email, error: profileErr.message });
-        // Only roll back an auth user we just created — never delete one we
-        // recovered by lookup, that account predates this run.
         if (!createErr) await admin.auth.admin.deleteUser(userId);
         continue;
       }
-
-      workIdByEmail.set(email, userId);
-    }
-
-    // Phase 2: wire reports_to/department + the org role now that every
-    // missing employee (and their manager, new or pre-existing) has a
-    // Work-Sync id. org_id is only set if the profile doesn't already have
-    // an active org (e.g. a platform-admin-owned profile) — never override
-    // someone's existing active org.
-    for (const emp of missing) {
-      const email = emp.email.toLowerCase();
-      const userId = workIdByEmail.get(email);
-      if (!userId) continue; // creation failed above, already recorded in errors
-
-      const manager = emp.reports_to ? byRmplId.get(emp.reports_to) : null;
-      const managerWorkId = manager ? workIdByEmail.get(manager.email.toLowerCase()) ?? null : null;
-
-      const { error: updateErr } = await admin
-        .from('profiles')
-        .update({ reports_to: managerWorkId, department: emp.department ?? null })
-        .eq('id', userId);
-      if (updateErr) {
-        errors.push({ email: emp.email, error: updateErr.message });
-        continue;
-      }
+      // Never override an existing active org (e.g. a platform admin).
       await admin.from('profiles').update({ org_id: org.id }).eq('id', userId).is('org_id', null);
 
-      const { error: roleUpsertErr } = await admin
-        .from('user_roles')
-        .upsert(
-          { org_id: org.id, user_id: userId, role: 'analyst', is_active: true },
-          { onConflict: 'user_id,org_id' },
-        );
-      if (roleUpsertErr) {
-        errors.push({ email: emp.email, error: roleUpsertErr.message });
-        continue;
+      workIdByEmail.set(email, userId);
+      profileByEmail.set(email, { id: userId, email: emp.email, reports_to: null, department: null, is_active: true });
+      created.push(emp.email);
+    }
+
+    // ── 2. Every active employee: org role, manager, department ───────
+    for (const emp of employees) {
+      const email = emp.email.toLowerCase();
+      const profile = profileByEmail.get(email);
+      if (!profile) continue;
+
+      const roleActive = roleActiveByUser.get(profile.id);
+      if (!roleActive) {
+        // New member gets the default role; a returning one keeps theirs.
+        const { error: rErr } = roleActive === undefined
+          ? await admin.from('user_roles').upsert(
+              { org_id: org.id, user_id: profile.id, role: 'analyst', is_active: true },
+              { onConflict: 'user_id,org_id' },
+            )
+          : await admin.from('user_roles').update({ is_active: true }).eq('org_id', org.id).eq('user_id', profile.id);
+        if (rErr) { errors.push({ email: emp.email, error: rErr.message }); continue; }
+        roleActiveByUser.set(profile.id, true);
       }
 
-      created.push(emp.email);
+      if (profile.is_active === false) {
+        await admin.from('profiles').update({ is_active: true }).eq('id', profile.id);
+        const { data: au } = await admin.auth.admin.getUserById(profile.id);
+        if (au?.user?.app_metadata?.rmpl_exit_block) {
+          await admin.auth.admin.updateUserById(profile.id, {
+            ban_duration: 'none',
+            app_metadata: { ...au.user.app_metadata, rmpl_exit_block: false },
+          });
+        }
+        reactivated.push(emp.email);
+      }
+
+      // Manager follows RMPL; no manager in RMPL leaves the current one.
+      const manager = emp.reports_to ? byRmplId.get(emp.reports_to) : null;
+      const managerWorkId = manager ? workIdByEmail.get(manager.email.toLowerCase()) ?? null : null;
+      const patch: Record<string, unknown> = {};
+      if (managerWorkId && managerWorkId !== profile.id && profile.reports_to !== managerWorkId) {
+        patch.reports_to = managerWorkId;
+      }
+      if (emp.department && emp.department !== profile.department) patch.department = emp.department;
+      if (Object.keys(patch).length) {
+        const { error: uErr } = await admin.from('profiles').update(patch).eq('id', profile.id);
+        if (uErr) errors.push({ email: emp.email, error: uErr.message });
+        else if (patch.reports_to) managersUpdated.push(emp.email);
+      }
+    }
+
+    // ── 3. Exited in RMPL → no access here ─────────────────────────────
+    for (const raw of exitedEmails) {
+      const email = raw.toLowerCase();
+      const profile = profileByEmail.get(email);
+      if (!profile) continue;
+      if (profile.is_active === false && !roleActiveByUser.get(profile.id)) continue;
+
+      const { error: e1 } = await admin
+        .from('user_roles')
+        .update({ is_active: false })
+        .eq('org_id', org.id)
+        .eq('user_id', profile.id);
+      if (e1) { errors.push({ email, error: e1.message }); continue; }
+      const { error: e2 } = await admin.from('profiles').update({ is_active: false }).eq('id', profile.id);
+      if (e2) { errors.push({ email, error: e2.message }); continue; }
+
+      const { data: au } = await admin.auth.admin.getUserById(profile.id);
+      if (au?.user) {
+        const { error: e3 } = await admin.auth.admin.updateUserById(profile.id, {
+          ban_duration: EXIT_BAN,
+          app_metadata: { ...au.user.app_metadata, rmpl_exit_block: true },
+        });
+        if (e3) { errors.push({ email, error: e3.message }); continue; }
+      }
+      deactivated.push(email);
     }
 
     return json({
       success: errors.length === 0,
       checked: employees.length,
       created,
-      skipped: employees.length - missing.length,
+      managersUpdated,
+      deactivated,
+      reactivated,
       errors,
     });
   } catch (error) {
